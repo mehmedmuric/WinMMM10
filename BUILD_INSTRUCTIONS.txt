@@ -1,0 +1,62 @@
+===========================================
+WinMMM10 Editor - Build Instructions
+===========================================
+
+PREREQUISITES:
+--------------
+1. CMake 3.20 or higher
+   Download: https://cmake.org/download/
+   Add to PATH during installation
+
+2. Qt 6.x (Core, Gui, Widgets, OpenGL, OpenGLWidgets, Json, Test)
+   Download: https://www.qt.io/download
+   Install to: C:\Qt\6.x.x\msvc2019_64 (or similar)
+
+3. Visual Studio 2022 with C++ Desktop Development workload
+   Download: https://visualstudio.microsoft.com/
+
+4. Inno Setup (for creating installer)
+   Download: https://jrsoftware.org/isdl.php
+
+BUILD STEPS:
+------------
+
+Step 1: Open Visual Studio Developer Command Prompt
+   - Start Menu → Visual Studio 2022 → x64 Native Tools Command Prompt
+
+Step 2: Navigate to project directory
+   cd C:\Users\mehme\OneDrive\Desktop\WinMMM10
+
+Step 3: Build the application
+   build_release.bat
+
+   OR manually:
+   mkdir build
+   cd build
+   cmake .. -G "Visual Studio 17 2022" -A x64
+   cmake --build . --config Release
+   cd ..
+
+Step 4: Create installer (optional)
+   create_installer.bat
+
+   OR manually:
+   1. Install Inno Setup
+   2. Open installer\WinMMM10Editor.iss
+   3. Update Qt paths (lines 28-30) to your Qt installation
+   4. Build → Compile
+
+INSTALLER LOCATION:
+-------------------
+After Step 4, the installer will be at:
+dist\WinMMM10Editor_Setup.exe
+
+Copy this file to USB drive for distribution!
+
+TROUBLESHOOTING:
+----------------
+- If CMake not found: Use Visual Studio Developer Command Prompt
+- If Qt not found: Set CMAKE_PREFIX_PATH in build command
+- If build fails: Check error messages, ensure all prerequisites installed
+- If installer fails: Check Qt paths in .iss file, ensure build succeeded
+
