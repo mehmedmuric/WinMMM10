@@ -66,4 +66,17 @@ echo Executable location:
 echo C:\WinMMM10\out\build\x64-Release\Release\WinMMM10Editor.exe
 echo.
 
+echo ============================================
+echo Deploying Qt DLLs...
+echo ============================================
+call deploy_qt_dlls.bat
+
+echo.
+echo ============================================
+echo ✅ Build and deployment completed!
+echo ============================================
+echo.
+echo The executable is ready to run with all Qt DLLs deployed.
+echo.
+
 pause
