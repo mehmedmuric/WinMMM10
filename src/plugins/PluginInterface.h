@@ -7,8 +7,11 @@
 
 namespace WinMMM10 {
 
-class PluginInterface {
+class PluginInterface : public QObject {
+    Q_OBJECT
+
 public:
+    explicit PluginInterface(QObject* parent = nullptr) : QObject(parent) {}
     virtual ~PluginInterface() = default;
     
     virtual std::string name() const = 0;
@@ -20,18 +23,29 @@ public:
     virtual void shutdown() = 0;
     
     // Optional: Custom map detection
-    virtual std::vector<size_t> detectMaps(const uint8_t* data, size_t size) { return {}; }
+    virtual std::vector<size_t> detectMaps(const uint8_t* data, size_t size) { 
+        Q_UNUSED(data);
+        Q_UNUSED(size);
+        return {}; 
+    }
     
     // Optional: Custom checksum calculation
-    virtual uint32_t calculateChecksum(const uint8_t* data, size_t size) { return 0; }
+    virtual uint32_t calculateChecksum(const uint8_t* data, size_t size) { 
+        Q_UNUSED(data);
+        Q_UNUSED(size);
+        return 0; 
+    }
     
     // Optional: Custom validation
-    virtual bool validateData(const uint8_t* data, size_t size) { return true; }
+    virtual bool validateData(const uint8_t* data, size_t size) { 
+        Q_UNUSED(data);
+        Q_UNUSED(size);
+        return true; 
+    }
 };
 
-// Note: PluginInterface is not a QObject-derived class, so we use a simple string identifier
-// Plugins should implement this interface and be loaded dynamically
 #define PLUGIN_INTERFACE_IID "com.winmmm10.PluginInterface/1.0"
+Q_DECLARE_INTERFACE(PluginInterface, PLUGIN_INTERFACE_IID)
 
 } // namespace WinMMM10
 

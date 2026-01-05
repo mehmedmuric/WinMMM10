@@ -2,8 +2,6 @@
 #include <QTest>
 
 void TestChecksum::testSimpleSum() {
-
-void TestChecksum::testSimpleSum() {
     uint8_t data[] = {0x01, 0x02, 0x03, 0x04, 0x05};
     uint32_t result = WinMMM10::ChecksumManager::instance().calculateChecksum(
         WinMMM10::ChecksumType::SimpleSum, data, 5);
