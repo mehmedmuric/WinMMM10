@@ -1,8 +1,7 @@
+#include "pch.h"
 #include "core/Application.h"
 #include "ui/MainWindow.h"
 #include "ui/DarkTheme.h"
-#include <QApplication>
-#include <QStyleFactory>
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

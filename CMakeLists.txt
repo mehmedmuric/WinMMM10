@@ -1,11 +1,52 @@
 cmake_minimum_required(VERSION 3.20)
 project(WinMMM10Editor VERSION 1.0.0 LANGUAGES CXX)
 
+# ============================================================================
+# C++ Standard Configuration
+# ============================================================================
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ============================================================================
+# Build Type Configuration
+# ============================================================================
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Available build types" FORCE)
+
+# ============================================================================
+# Compiler Options and Warnings
+# ============================================================================
+if(MSVC)
+    # Common compiler flags for all configurations
+    add_compile_options(/MP)  # Multi-processor compilation
+    add_compile_options(/W4)  # Warning level 4
+    add_compile_options(/permissive-)  # Conformance mode
+    
+    # Release configuration flags
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /GL" CACHE STRING "Release compiler flags" FORCE)  # Maximize speed + whole program optimization
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG" CACHE STRING "Release linker flags" FORCE)  # Link-time code generation (LTO)
+    
+    # Debug configuration flags
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /RTC1" CACHE STRING "Debug compiler flags" FORCE)  # Disable optimizations + debug info + runtime checks
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG" CACHE STRING "Debug linker flags" FORCE)  # Debug linker information
+else()
+    # GCC/Clang flags
+    add_compile_options(-Wall -Wextra -Wpedantic)
+    
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_compile_options(-O3 -DNDEBUG)
+    else()
+        add_compile_options(-g -O0)
+    endif()
+endif()
+
+# ============================================================================
 # Qt Configuration
+# ============================================================================
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -48,11 +89,17 @@ find_package(Qt6 REQUIRED COMPONENTS
     Json
 )
 
-# Application version
+# ============================================================================
+# Application Version
+# ============================================================================
 set(APP_VERSION_MAJOR 1)
 set(APP_VERSION_MINOR 0)
 set(APP_VERSION_PATCH 0)
 set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}")
+
+# ============================================================================
+# Source File Organization
+# ============================================================================
 
 # Source directories
 set(CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/core)
@@ -208,9 +255,20 @@ set(ALL_HEADERS
     ${UI_HEADERS}
 )
 
-# Executable
+# ============================================================================
+# Main Executable Target
+# ============================================================================
 add_executable(${PROJECT_NAME} ${ALL_SOURCES} ${ALL_HEADERS})
 
+# Precompiled Headers (PCH)
+target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.h)
+
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# Link libraries
 target_link_libraries(${PROJECT_NAME}
     Qt6::Core
     Qt6::Gui
@@ -230,12 +288,9 @@ if(WIN32)
     )
 endif()
 
-# Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
+# ============================================================================
 # Testing
+# ============================================================================
 option(BUILD_TESTS "Build unit tests" ON)
 if(BUILD_TESTS)
     find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -255,6 +310,10 @@ if(BUILD_TESTS)
     )
     
     add_executable(${PROJECT_NAME}_Tests ${TEST_SOURCES} ${TEST_HEADERS})
+    
+    # Precompiled Headers for tests (optional but recommended)
+    target_precompile_headers(${PROJECT_NAME}_Tests PRIVATE src/pch.h)
+    
     target_link_libraries(${PROJECT_NAME}_Tests
         Qt6::Core
         Qt6::Test
@@ -269,7 +328,9 @@ if(BUILD_TESTS)
     add_test(NAME ${PROJECT_NAME}_Tests COMMAND ${PROJECT_NAME}_Tests)
 endif()
 
+# ============================================================================
 # Installation
+# ============================================================================
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
@@ -281,4 +342,3 @@ install(DIRECTORY resources/ DESTINATION resources)
 
 # Copy plugin directory structure
 install(DIRECTORY plugins/ DESTINATION plugins OPTIONAL)
-
