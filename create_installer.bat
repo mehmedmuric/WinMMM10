@@ -2,12 +2,15 @@
 echo Creating WinMMM10 Editor Installer...
 echo.
 
-REM Check if executable exists
-if not exist "build\Release\WinMMM10Editor.exe" (
-    echo Error: WinMMM10Editor.exe not found!
-    echo Please build the project first using build_release.bat
-    pause
-    exit /b 1
+REM Check if executable exists (updated path to match build_release.bat output)
+if not exist "out\build\x64-Release\Release\WinMMM10Editor.exe" (
+    if not exist "out\build\x64-Release\WinMMM10Editor.exe" (
+        echo Error: WinMMM10Editor.exe not found!
+        echo Please build the project first using build_release.bat
+        echo Expected location: out\build\x64-Release\Release\WinMMM10Editor.exe
+        pause
+        exit /b 1
+    )
 )
 
 REM Create dist directory if it doesn't exist

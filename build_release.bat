@@ -16,11 +16,14 @@ if exist out (
 )
 
 REM === QT CONFIG ===
-set QT_ROOT=C:\Qt\6.10.1\msvc2022_64
-set Qt6_DIR=%QT_ROOT%\lib\cmake\Qt6
+REM Set QT_ROOT environment variable to override default Qt path
+REM Example: set QT_ROOT=C:\Qt\6.10.1\msvc2022_64
+if not defined QT_ROOT (
+    set QT_ROOT=C:\Qt\6.10.1\msvc2022_64
+)
 
 echo Using Qt6 from:
-echo %Qt6_DIR%
+echo %QT_ROOT%
 echo.
 
 REM === CONFIGURE CMAKE ===
@@ -30,7 +33,7 @@ cmake -S . -B out\build\x64-Release ^
  -G "Visual Studio 18 2026" ^
  -A x64 ^
  -T v145 ^
- -DCMAKE_PREFIX_PATH="%QT_ROOT%\lib\cmake"
+ -DCMAKE_PREFIX_PATH="%QT_ROOT%"
 
 IF ERRORLEVEL 1 (
     echo.
