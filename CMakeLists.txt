@@ -55,22 +55,10 @@ set(CMAKE_AUTOUIC ON)
 if(WIN32 AND NOT DEFINED ENV{Qt6_DIR} AND NOT DEFINED CMAKE_PREFIX_PATH)
     # Common Qt installation paths on Windows (check multiple versions and compilers)
     set(QT_POSSIBLE_PATHS
-        "C:/Qt/6.10.1/msvc2026_64"
-        "C:/Qt/6.10.1/msvc2025_64"
         "C:/Qt/6.10.1/msvc2022_64"
         "C:/Qt/6.10.1/msvc2019_64"
-        "C:/Qt/6.10.0/msvc2026_64"
-        "C:/Qt/6.10.0/msvc2025_64"
         "C:/Qt/6.10.0/msvc2022_64"
         "C:/Qt/6.10.0/msvc2019_64"
-        "C:/Qt/6.7.0/msvc2022_64"
-        "C:/Qt/6.7.0/msvc2019_64"
-        "C:/Qt/6.6.0/msvc2022_64"
-        "C:/Qt/6.6.0/msvc2019_64"
-        "C:/Qt/6.5.0/msvc2022_64"
-        "C:/Qt/6.5.0/msvc2019_64"
-        "C:/Qt/6.4.0/msvc2022_64"
-        "C:/Qt/6.4.0/msvc2019_64"
         "C:/Qt/6.10.1/mingw_64"
         "C:/Qt/6.10.0/mingw_64"
     )
@@ -295,7 +283,7 @@ endif()
 # ============================================================================
 option(BUILD_TESTS "Build unit tests" ON)
 if(BUILD_TESTS)
-    find_package(Qt6 REQUIRED COMPONENTS Test Json)
+    find_package(Qt6 REQUIRED COMPONENTS Test)
     enable_testing()
     
     set(TEST_SOURCES
