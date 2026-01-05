@@ -19,7 +19,21 @@
 #include "StatusBar.h"
 #include "ProjectDialog.h"
 #include "MapDefinitionDialog.h"
+#include "BookmarksPanel.h"
+#include "AnnotationsPanel.h"
+#include "RecentFilesMenu.h"
+#include "SearchReplaceDialog.h"
+#include "CacheSettingsDialog.h"
 #include "../heuristics/MapDetector.h"
+#include "../cache/CacheManager.h"
+#include "../core/BookmarkManager.h"
+#include "../core/AnnotationManager.h"
+#include "../binary/HexSearch.h"
+#include "../editing/MapComparator.h"
+#include "../editing/BatchOperations.h"
+#include "../editing/MapMath.h"
+#include "../editing/InterpolationEngine.h"
+#include "../kess/KessMapConverter.h"
 
 namespace WinMMM10 {
 
@@ -49,6 +63,17 @@ private slots:
     void onMapDoubleClicked(int index);
     void exportMapDefinitions();
     void importMapDefinitions();
+    void showCacheSettings();
+    void showSearchReplace();
+    void addBookmark();
+    void addAnnotation();
+    void compareMaps();
+    void batchOperations();
+    void mapMathOperations();
+    void interpolateMap();
+    void smoothMap();
+    void importKessFile();
+    void exportKessFile();
     void about();
 
 private:
@@ -59,10 +84,20 @@ private:
     void updateWindowTitle();
     bool maybeSave();
     void loadBinaryFile(const QString& filepath);
+    void updateRecentFilesMenus();
     
     ProjectManager m_projectManager;
     BinaryFile m_binaryFile;
     MapDetector m_mapDetector;
+    CacheManager m_cacheManager;
+    BookmarkManager m_bookmarkManager;
+    AnnotationManager m_annotationManager;
+    HexSearch* m_hexSearch{nullptr};
+    MapComparator m_mapComparator;
+    BatchOperations* m_batchOps{nullptr};
+    MapMath* m_mapMath{nullptr};
+    InterpolationEngine* m_interpolationEngine{nullptr};
+    KessMapConverter m_kessConverter;
     
     // UI Components
     HexEditorWidget* m_hexEditor{nullptr};
@@ -71,6 +106,11 @@ private:
     Map2DViewer* m_map2DViewer{nullptr};
     Map3DViewer* m_map3DViewer{nullptr};
     StatusBar* m_statusBar{nullptr};
+    BookmarksPanel* m_bookmarksPanel{nullptr};
+    AnnotationsPanel* m_annotationsPanel{nullptr};
+    RecentFilesMenu* m_recentProjectsMenu{nullptr};
+    RecentFilesMenu* m_recentBinariesMenu{nullptr};
+    SearchReplaceDialog* m_searchReplaceDialog{nullptr};
     
     // Actions
     QAction* m_newProjectAction{nullptr};
@@ -83,6 +123,16 @@ private:
     QAction* m_editMapAction{nullptr};
     QAction* m_deleteMapAction{nullptr};
     QAction* m_exitAction{nullptr};
+    QAction* m_searchAction{nullptr};
+    QAction* m_addBookmarkAction{nullptr};
+    QAction* m_addAnnotationAction{nullptr};
+    QAction* m_compareMapsAction{nullptr};
+    QAction* m_batchOpsAction{nullptr};
+    QAction* m_mapMathAction{nullptr};
+    QAction* m_interpolateAction{nullptr};
+    QAction* m_smoothAction{nullptr};
+    QAction* m_importKessAction{nullptr};
+    QAction* m_exportKessAction{nullptr};
 };
 
 } // namespace WinMMM10

@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include "CacheSettingsDialog.h"
+#include "../cache/CacheManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QCloseEvent>
@@ -13,8 +15,16 @@ namespace WinMMM10 {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
+    , m_cacheManager(CacheManager::instance())
 {
     Settings::instance().load();
+    CacheManager::instance().applicationCache().load();
+    
+    // Initialize editing engines
+    m_hexSearch = new HexSearch(&m_binaryFile);
+    m_batchOps = new BatchOperations(&m_binaryFile);
+    m_mapMath = new MapMath(&m_binaryFile);
+    m_interpolationEngine = new InterpolationEngine(&m_binaryFile);
     
     setupUI();
     setupMenus();
@@ -52,6 +62,25 @@ void MainWindow::setupMenus() {
     m_saveBinaryAction->setEnabled(false);
     fileMenu->addAction("Save Binary &As...", this, &MainWindow::saveBinaryAs);
     fileMenu->addSeparator();
+    
+    // Recent files
+    m_recentProjectsMenu = new RecentFilesMenu("Recent &Projects", this);
+    connect(m_recentProjectsMenu, &RecentFilesMenu::fileSelected, this, [this](const QString& path) {
+        if (!path.isEmpty()) {
+            openProject();
+        }
+    });
+    fileMenu->addMenu(m_recentProjectsMenu);
+    
+    m_recentBinariesMenu = new RecentFilesMenu("Recent &Binaries", this);
+    connect(m_recentBinariesMenu, &RecentFilesMenu::fileSelected, this, [this](const QString& path) {
+        if (!path.isEmpty()) {
+            loadBinaryFile(path);
+        }
+    });
+    fileMenu->addMenu(m_recentBinariesMenu);
+    fileMenu->addSeparator();
+    
     m_exitAction = fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
     
     // Map menu
@@ -66,8 +95,36 @@ void MainWindow::setupMenus() {
     m_deleteMapAction = mapMenu->addAction("&Delete Map", this, &MainWindow::deleteMap);
     m_deleteMapAction->setEnabled(false);
     mapMenu->addSeparator();
+    m_compareMapsAction = mapMenu->addAction("&Compare Maps...", this, &MainWindow::compareMaps);
+    m_compareMapsAction->setEnabled(false);
+    mapMenu->addSeparator();
+    m_batchOpsAction = mapMenu->addAction("&Batch Operations...", this, &MainWindow::batchOperations);
+    m_batchOpsAction->setEnabled(false);
+    m_mapMathAction = mapMenu->addAction("Map &Math...", this, &MainWindow::mapMathOperations);
+    m_mapMathAction->setEnabled(false);
+    mapMenu->addSeparator();
+    m_interpolateAction = mapMenu->addAction("&Interpolate Map...", this, &MainWindow::interpolateMap);
+    m_interpolateAction->setEnabled(false);
+    m_smoothAction = mapMenu->addAction("&Smooth Map...", this, &MainWindow::smoothMap);
+    m_smoothAction->setEnabled(false);
+    mapMenu->addSeparator();
     mapMenu->addAction("&Export Definitions...", this, &MainWindow::exportMapDefinitions);
     mapMenu->addAction("&Import Definitions...", this, &MainWindow::importMapDefinitions);
+    mapMenu->addSeparator();
+    m_importKessAction = mapMenu->addAction("Import &KESS File...", this, &MainWindow::importKessFile);
+    m_exportKessAction = mapMenu->addAction("Export to &KESS File...", this, &MainWindow::exportKessFile);
+    m_exportKessAction->setEnabled(false);
+    
+    // Edit menu
+    QMenu* editMenu = menuBar()->addMenu("&Edit");
+    m_searchAction = editMenu->addAction("&Search and Replace...", this, &MainWindow::showSearchReplace, QKeySequence::Find);
+    editMenu->addSeparator();
+    m_addBookmarkAction = editMenu->addAction("Add &Bookmark...", this, &MainWindow::addBookmark, QKeySequence("Ctrl+B"));
+    m_addAnnotationAction = editMenu->addAction("Add &Annotation...", this, &MainWindow::addAnnotation, QKeySequence("Ctrl+A"));
+    
+    // Tools menu
+    QMenu* toolsMenu = menuBar()->addMenu("&Tools");
+    toolsMenu->addAction("&Cache Settings...", this, &MainWindow::showCacheSettings);
     
     // Help menu
     QMenu* helpMenu = menuBar()->addMenu("&Help");
@@ -108,6 +165,26 @@ void MainWindow::setupDocks() {
     m_mapViewerTabs->addTab(m_map3DViewer, "3D View");
     viewerDock->setWidget(m_mapViewerTabs);
     addDockWidget(Qt::BottomDockWidgetArea, viewerDock);
+    
+    // Bookmarks dock
+    m_bookmarksPanel = new BookmarksPanel(this);
+    m_bookmarksPanel->setBookmarkManager(&m_bookmarkManager);
+    connect(m_bookmarksPanel, &BookmarksPanel::bookmarkDoubleClicked, this, [this](size_t address) {
+        if (m_hexEditor && m_hexEditor->hexEditor()) {
+            m_hexEditor->hexEditor()->goToAddress(address);
+        }
+    });
+    addDockWidget(Qt::LeftDockWidgetArea, m_bookmarksPanel);
+    
+    // Annotations dock
+    m_annotationsPanel = new AnnotationsPanel(this);
+    m_annotationsPanel->setAnnotationManager(&m_annotationManager);
+    connect(m_annotationsPanel, &AnnotationsPanel::annotationDoubleClicked, this, [this](size_t address) {
+        if (m_hexEditor && m_hexEditor->hexEditor()) {
+            m_hexEditor->hexEditor()->goToAddress(address);
+        }
+    });
+    addDockWidget(Qt::LeftDockWidgetArea, m_annotationsPanel);
 }
 
 void MainWindow::updateWindowTitle() {
@@ -137,6 +214,10 @@ void MainWindow::newProject() {
             
             loadBinaryFile(dialog.binaryFilePath());
             
+            // Update cache
+            CacheManager::instance().setCurrentProject(filepath.toStdString());
+            CacheManager::instance().applicationCache().addRecentProject(filepath.toStdString());
+            
             updateWindowTitle();
             m_saveProjectAction->setEnabled(true);
             m_addMapAction->setEnabled(true);
@@ -160,9 +241,14 @@ void MainWindow::openProject() {
         if (m_projectManager.loadProject(filepath.toStdString())) {
             Project* project = m_projectManager.currentProject();
             
+            // Update cache
+            CacheManager::instance().setCurrentProject(filepath.toStdString());
+            CacheManager::instance().applicationCache().addRecentProject(filepath.toStdString());
+            
             // Load binary file
             if (!project->binaryFilepath().empty()) {
                 loadBinaryFile(QString::fromStdString(project->binaryFilepath()));
+                CacheManager::instance().applicationCache().addRecentBinary(project->binaryFilepath());
             }
             
             // Load maps
@@ -175,6 +261,15 @@ void MainWindow::openProject() {
             m_saveProjectAction->setEnabled(true);
             m_addMapAction->setEnabled(true);
             m_detectMapsAction->setEnabled(m_binaryFile.isLoaded());
+            m_compareMapsAction->setEnabled(m_projectManager.currentProject()->mapCount() >= 2);
+            m_batchOpsAction->setEnabled(true);
+            m_mapMathAction->setEnabled(true);
+            m_interpolateAction->setEnabled(true);
+            m_smoothAction->setEnabled(true);
+            m_exportKessAction->setEnabled(true);
+            
+            // Update recent files menus
+            updateRecentFilesMenus();
         } else {
             QMessageBox::critical(this, "Error", "Failed to open project file.");
         }
@@ -219,6 +314,8 @@ void MainWindow::loadBinaryFile(const QString& filepath) {
         
         Settings::instance().setLastBinaryPath(filepath.toStdString());
         Settings::instance().save();
+        
+        CacheManager::instance().applicationCache().addRecentBinary(filepath.toStdString());
     } else {
         QMessageBox::critical(this, "Error", "Failed to load binary file.");
     }
@@ -383,6 +480,131 @@ void MainWindow::importMapDefinitions() {
     QMessageBox::information(this, "Import", "Import functionality to be implemented.");
 }
 
+void MainWindow::showCacheSettings() {
+    CacheSettingsDialog dialog(this);
+    dialog.exec();
+}
+
+void MainWindow::showSearchReplace() {
+    if (!m_searchReplaceDialog) {
+        m_searchReplaceDialog = new SearchReplaceDialog(this);
+        connect(m_searchReplaceDialog, &SearchReplaceDialog::findNext, this, [this]() {
+            // Implement find next
+        });
+        connect(m_searchReplaceDialog, &SearchReplaceDialog::findPrevious, this, [this]() {
+            // Implement find previous
+        });
+    }
+    m_searchReplaceDialog->show();
+    m_searchReplaceDialog->raise();
+    m_searchReplaceDialog->activateWindow();
+}
+
+void MainWindow::addBookmark() {
+    if (m_hexEditor && m_hexEditor->hexEditor()) {
+        size_t address = m_hexEditor->hexEditor()->currentAddress();
+        m_annotationsPanel->setCurrentAddress(address);
+        m_bookmarksPanel->show();
+        m_bookmarksPanel->raise();
+    }
+}
+
+void MainWindow::addAnnotation() {
+    if (m_hexEditor && m_hexEditor->hexEditor()) {
+        size_t address = m_hexEditor->hexEditor()->currentAddress();
+        m_annotationsPanel->setCurrentAddress(address);
+        m_annotationsPanel->show();
+        m_annotationsPanel->raise();
+    }
+}
+
+void MainWindow::compareMaps() {
+    QMessageBox::information(this, "Map Comparison", "Map comparison feature - to be fully implemented with UI.");
+}
+
+void MainWindow::batchOperations() {
+    QMessageBox::information(this, "Batch Operations", "Batch operations feature - to be fully implemented with UI.");
+}
+
+void MainWindow::mapMathOperations() {
+    QMessageBox::information(this, "Map Math", "Map math operations feature - to be fully implemented with UI.");
+}
+
+void MainWindow::interpolateMap() {
+    int index = m_mapList->currentMapIndex();
+    if (index < 0 || !m_projectManager.hasCurrentProject() || !m_binaryFile.isLoaded()) {
+        return;
+    }
+    
+    Project* project = m_projectManager.currentProject();
+    MapDefinition& map = project->getMap(index);
+    
+    if (m_interpolationEngine->interpolateMap(map)) {
+        m_projectManager.markChanged();
+        updateWindowTitle();
+        onMapSelected(index); // Refresh view
+    }
+}
+
+void MainWindow::smoothMap() {
+    int index = m_mapList->currentMapIndex();
+    if (index < 0 || !m_projectManager.hasCurrentProject() || !m_binaryFile.isLoaded()) {
+        return;
+    }
+    
+    Project* project = m_projectManager.currentProject();
+    MapDefinition& map = project->getMap(index);
+    
+    if (m_interpolationEngine->smoothMap(map)) {
+        m_projectManager.markChanged();
+        updateWindowTitle();
+        onMapSelected(index); // Refresh view
+    }
+}
+
+void MainWindow::importKessFile() {
+    QString filepath = QFileDialog::getOpenFileName(this, "Import KESS File", "", 
+                                                    "KESS Files (*.kess *.ori *.mod);;All Files (*.*)");
+    if (!filepath.isEmpty()) {
+        Project* project = m_projectManager.currentProject();
+        if (!project) {
+            // Create a new project for import
+            newProject();
+            project = m_projectManager.currentProject();
+        }
+        
+        if (project && m_kessConverter.importKessFile(filepath.toStdString(), *project)) {
+            // Refresh map list
+            m_mapList->clearMaps();
+            for (size_t i = 0; i < project->mapCount(); ++i) {
+                m_mapList->addMap(project->getMap(i));
+            }
+            m_projectManager.markChanged();
+            updateWindowTitle();
+            QMessageBox::information(this, "Import", "KESS file imported successfully.");
+        } else {
+            QMessageBox::critical(this, "Error", "Failed to import KESS file.");
+        }
+    }
+}
+
+void MainWindow::exportKessFile() {
+    if (!m_projectManager.hasCurrentProject()) {
+        return;
+    }
+    
+    QString filepath = QFileDialog::getSaveFileName(this, "Export to KESS File", "", 
+                                                   "KESS Files (*.kess);;All Files (*.*)");
+    if (!filepath.isEmpty()) {
+        Project* project = m_projectManager.currentProject();
+        if (m_kessConverter.exportToKessFile(*project, filepath.toStdString())) {
+            QMessageBox::information(this, "Export", "Project exported to KESS file successfully.");
+        } else {
+            QMessageBox::critical(this, "Error", "Failed to export to KESS file.");
+        }
+    }
+}
+
 void MainWindow::about() {
     QMessageBox::about(this, "About WinMMM10 Editor",
                       "WinMMM10 Editor v1.0.0\n\n"
@@ -407,9 +629,34 @@ bool MainWindow::maybeSave() {
     return true;
 }
 
+void MainWindow::updateRecentFilesMenus() {
+    auto& appCache = CacheManager::instance().applicationCache();
+    
+    auto recentProjects = appCache.getRecentProjects();
+    std::vector<std::string> projectPaths;
+    for (const auto& rf : recentProjects) {
+        projectPaths.push_back(rf.filepath);
+    }
+    m_recentProjectsMenu->updateRecentFiles(projectPaths);
+    
+    auto recentBinaries = appCache.getRecentBinaries();
+    std::vector<std::string> binaryPaths;
+    for (const auto& rf : recentBinaries) {
+        binaryPaths.push_back(rf.filepath);
+    }
+    m_recentBinariesMenu->updateRecentFiles(binaryPaths);
+}
+
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (maybeSave()) {
         Settings::instance().save();
+        CacheManager::instance().applicationCache().save();
+        
+        // Auto-cleanup if enabled
+        if (Settings::instance().autoCleanupCache()) {
+            CacheManager::instance().clearTempFiles();
+        }
+        
         event->accept();
     } else {
         event->ignore();

@@ -78,6 +78,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Widgets 
     OpenGL 
     OpenGLWidgets
+    Svg
 )
 
 # ============================================================================
@@ -101,6 +102,9 @@ set(HEURISTICS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/heuristics)
 set(VALIDATION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/validation)
 set(MAPPACKS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/mappacks)
 set(PLUGINS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins)
+set(CACHE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/cache)
+set(KESS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/kess)
+set(EDITING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/editing)
 
 # Core sources
 set(CORE_SOURCES
@@ -108,6 +112,8 @@ set(CORE_SOURCES
     ${CORE_DIR}/Project.cpp
     ${CORE_DIR}/ProjectManager.cpp
     ${CORE_DIR}/Settings.cpp
+    ${CORE_DIR}/BookmarkManager.cpp
+    ${CORE_DIR}/AnnotationManager.cpp
 )
 
 set(CORE_HEADERS
@@ -115,6 +121,8 @@ set(CORE_HEADERS
     ${CORE_DIR}/Project.h
     ${CORE_DIR}/ProjectManager.h
     ${CORE_DIR}/Settings.h
+    ${CORE_DIR}/BookmarkManager.h
+    ${CORE_DIR}/AnnotationManager.h
 )
 
 # Binary sources
@@ -123,6 +131,7 @@ set(BINARY_SOURCES
     ${BINARY_DIR}/MemoryMapper.cpp
     ${BINARY_DIR}/EditHistory.cpp
     ${BINARY_DIR}/Checksum.cpp
+    ${BINARY_DIR}/HexSearch.cpp
 )
 
 set(BINARY_HEADERS
@@ -131,6 +140,7 @@ set(BINARY_HEADERS
     ${BINARY_DIR}/Endianness.h
     ${BINARY_DIR}/EditHistory.h
     ${BINARY_DIR}/Checksum.h
+    ${BINARY_DIR}/HexSearch.h
 )
 
 # Map sources
@@ -190,6 +200,48 @@ set(PLUGINS_HEADERS
     ${PLUGINS_DIR}/PluginManager.h
 )
 
+# Cache sources
+set(CACHE_SOURCES
+    ${CACHE_DIR}/ApplicationCache.cpp
+    ${CACHE_DIR}/ProjectCache.cpp
+    ${CACHE_DIR}/CacheManager.cpp
+)
+
+set(CACHE_HEADERS
+    ${CACHE_DIR}/ApplicationCache.h
+    ${CACHE_DIR}/ProjectCache.h
+    ${CACHE_DIR}/CacheManager.h
+)
+
+# KESS sources
+set(KESS_SOURCES
+    ${KESS_DIR}/KessFileReader.cpp
+    ${KESS_DIR}/KessFileWriter.cpp
+    ${KESS_DIR}/KessMapConverter.cpp
+)
+
+set(KESS_HEADERS
+    ${KESS_DIR}/KessEcuInfo.h
+    ${KESS_DIR}/KessFileReader.h
+    ${KESS_DIR}/KessFileWriter.h
+    ${KESS_DIR}/KessMapConverter.h
+)
+
+# Editing sources
+set(EDITING_SOURCES
+    ${EDITING_DIR}/MapComparator.cpp
+    ${EDITING_DIR}/BatchOperations.cpp
+    ${EDITING_DIR}/MapMath.cpp
+    ${EDITING_DIR}/InterpolationEngine.cpp
+)
+
+set(EDITING_HEADERS
+    ${EDITING_DIR}/MapComparator.h
+    ${EDITING_DIR}/BatchOperations.h
+    ${EDITING_DIR}/MapMath.h
+    ${EDITING_DIR}/InterpolationEngine.h
+)
+
 # UI sources
 set(UI_SOURCES
     ${UI_DIR}/MainWindow.cpp
@@ -203,6 +255,11 @@ set(UI_SOURCES
     ${UI_DIR}/StatusBar.cpp
     ${UI_DIR}/DarkTheme.cpp
     ${UI_DIR}/DockManager.cpp
+    ${UI_DIR}/BookmarksPanel.cpp
+    ${UI_DIR}/AnnotationsPanel.cpp
+    ${UI_DIR}/RecentFilesMenu.cpp
+    ${UI_DIR}/SearchReplaceDialog.cpp
+    ${UI_DIR}/CacheSettingsDialog.cpp
 )
 
 set(UI_HEADERS
@@ -217,6 +274,11 @@ set(UI_HEADERS
     ${UI_DIR}/StatusBar.h
     ${UI_DIR}/DarkTheme.h
     ${UI_DIR}/DockManager.h
+    ${UI_DIR}/BookmarksPanel.h
+    ${UI_DIR}/AnnotationsPanel.h
+    ${UI_DIR}/RecentFilesMenu.h
+    ${UI_DIR}/SearchReplaceDialog.h
+    ${UI_DIR}/CacheSettingsDialog.h
 )
 
 # Main application
@@ -232,6 +294,9 @@ set(ALL_SOURCES
     ${VALIDATION_SOURCES}
     ${MAPPACKS_SOURCES}
     ${PLUGINS_SOURCES}
+    ${CACHE_SOURCES}
+    ${KESS_SOURCES}
+    ${EDITING_SOURCES}
     ${UI_SOURCES}
 )
 
@@ -243,6 +308,9 @@ set(ALL_HEADERS
     ${VALIDATION_HEADERS}
     ${MAPPACKS_HEADERS}
     ${PLUGINS_HEADERS}
+    ${CACHE_HEADERS}
+    ${KESS_HEADERS}
+    ${EDITING_HEADERS}
     ${UI_HEADERS}
 )
 
@@ -256,6 +324,9 @@ set(CORE_LIB_SOURCES
     ${HEURISTICS_SOURCES}
     ${VALIDATION_SOURCES}
     ${MAPPACKS_SOURCES}
+    ${CACHE_SOURCES}
+    ${KESS_SOURCES}
+    ${EDITING_SOURCES}
 )
 
 set(CORE_LIB_HEADERS
@@ -265,6 +336,9 @@ set(CORE_LIB_HEADERS
     ${HEURISTICS_HEADERS}
     ${VALIDATION_HEADERS}
     ${MAPPACKS_HEADERS}
+    ${CACHE_HEADERS}
+    ${KESS_HEADERS}
+    ${EDITING_HEADERS}
 )
 
 add_library(${PROJECT_NAME}_Core STATIC ${CORE_LIB_SOURCES} ${CORE_LIB_HEADERS})
@@ -303,6 +377,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt6::Widgets
     Qt6::OpenGL
     Qt6::OpenGLWidgets
+    Qt6::Svg
 )
 
 # Windows-specific: Link OpenGL library for legacy OpenGL functions

@@ -14,6 +14,9 @@ public:
     std::string lastBinaryPath() const { return m_lastBinaryPath; }
     void setLastBinaryPath(const std::string& path) { m_lastBinaryPath = path; }
     
+    bool autoCleanupCache() const { return m_autoCleanupCache; }
+    void setAutoCleanupCache(bool enabled) { m_autoCleanupCache = enabled; }
+    
     void load();
     void save();
 
@@ -25,6 +28,7 @@ private:
     
     std::string m_lastProjectPath;
     std::string m_lastBinaryPath;
+    bool m_autoCleanupCache{false};
 };
 
 } // namespace WinMMM10

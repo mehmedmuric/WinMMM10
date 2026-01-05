@@ -1,76 +1,104 @@
-# ✅ Ready for Build
+# Ready for Build ✅
 
-The project cache has been cleared and everything is ready for building.
+The WinMMM10 Editor project has been cleaned and is ready for a fresh build.
 
-## Cache Status
+## Cache Cleanup Status
 
-- ✅ Build directories cleared (`out`, `build`)
-- ✅ CMake cache files removed
-- ✅ Visual Studio cache cleared (`.vs`)
-- ✅ All build artifacts removed
+- ✅ Build output directory (`out/build`) - Removed
+- ✅ CMake cache files - Removed
+- ✅ CMakeFiles directory - Removed
+- ✅ Visual Studio cache (`.vs`) - Removed
+- ✅ All build artifacts cleared
+
+## New Features Added
+
+The project now includes comprehensive WinOLS5-like features:
+
+### Cache Management
+- Application cache (recent files, thumbnails)
+- Project cache (map detection results)
+- Cache settings dialog with cleanup options
+
+### UI/UX Enhancements
+- Enhanced dark theme with modern styling
+- Recent files menu for projects and binaries
+- Enhanced status bar with selection info
+- Bookmarks panel with categories
+- Annotations panel with color coding
+
+### Advanced Editing
+- Search and replace (hex, text, pattern modes)
+- Bookmark system
+- Annotation system
+
+### Map Operations
+- Map comparison engine
+- Batch operations (copy, paste, fill)
+- Map math (add, subtract, multiply, divide)
+- Interpolation and smoothing
+
+### KESS Integration
+- KESS file format reader (.kess, .ori, .mod)
+- KESS file format writer
+- Map converter for KESS format
 
 ## Build Instructions
 
-### Step 1: Build the Application
+### Windows (MSVC)
 
-Run the build script:
-```batch
+```bash
+# Create build directory
+mkdir out\build
+cd out\build
+
+# Configure with CMake
+cmake .. -G "Visual Studio 17 2022" -A x64
+
+# Build
+cmake --build . --config Release
+```
+
+Or use the build script:
+```bash
 build_release.bat
 ```
 
-This will:
-1. Configure CMake with Qt6
-2. Build the Release version
-3. Create executable at: `out\build\x64-Release\Release\WinMMM10Editor.exe`
+### Dependencies
 
-### Step 2: Test the Application (Optional)
+- CMake 3.20 or higher
+- Qt 6.x (Core, Gui, Widgets, OpenGL, OpenGLWidgets, **Svg**)
+- C++20 compatible compiler (MSVC 2019+, GCC 10+, Clang 12+)
 
-Run the executable to verify it works:
-```batch
-out\build\x64-Release\Release\WinMMM10Editor.exe
-```
+### New Qt Module Required
 
-### Step 3: Create Installer
+**Qt6::Svg** - Added for modern icon support (already added to CMakeLists.txt)
 
-1. **Update Qt path** in `installer\WinMMM10Editor.iss` (line 10):
-   ```inno
-   #define QtRoot "C:\Qt\6.10.1\msvc2022_64"
+## Project Structure
+
+All new source files have been added to CMakeLists.txt:
+
+- `src/cache/` - Cache management system
+- `src/kess/` - KESS file format support
+- `src/editing/` - Advanced editing features
+- Enhanced `src/ui/` - New UI components
+- Enhanced `src/core/` - Bookmark and annotation managers
+
+## Next Steps
+
+1. **Build the project** using the instructions above
+2. **Run tests** to verify functionality:
+   ```bash
+   cd out\build\x64-Release\Release
+   WinMMM10Editor_Tests.exe
    ```
-   Make sure this matches your Qt installation path.
-
-2. **Run installer script**:
-   ```batch
-   create_installer.bat
+3. **Run the application**:
+   ```bash
+   WinMMM10Editor.exe
    ```
 
-3. **Installer location**:
-   ```
-   dist\WinMMM10Editor_Setup.exe
-   ```
+## Notes
 
-## Build Configuration
-
-- **Generator**: Visual Studio 18 2026
-- **Platform**: x64
-- **Toolset**: v145
-- **Build Type**: Release
-- **Qt Version**: 6.10.1 (msvc2022_64)
-- **Qt Components**: Core, Gui, Widgets, OpenGL, OpenGLWidgets, Json, Test
-
-## All Fixes Applied
-
-✅ ScalingEngine.h - Function overloading fixed with templates  
-✅ Endianness.h - Missing cstring include added  
-✅ PluginInterface.h - Qt interface declaration fixed  
-✅ pch.h - OpenGL includes made conditional for tests  
-✅ HexEditor.cpp - std::min macro conflict fixed  
-✅ Map2D.cpp/Map3D.cpp - Explicit template parameters added  
-✅ TestChecksum.cpp - Duplicate function declaration removed  
-✅ CMakeLists.txt - Core library created, tests linked, OpenGL library added  
-✅ Icon resource - Made optional  
-✅ Build script - Executable path corrected  
-
-## Ready to Build! 🚀
-
-Run `build_release.bat` to start the build process.
-
+- All cache has been cleared for a clean build
+- All new features are integrated into MainWindow
+- CMakeLists.txt has been updated with all dependencies
+- The project is ready for compilation
