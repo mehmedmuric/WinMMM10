@@ -44,8 +44,9 @@ public:
     }
 };
 
+// Note: Since PluginInterface inherits from QObject, we use qobject_cast directly
+// No need for Q_DECLARE_INTERFACE which is for non-QObject interfaces
 #define PLUGIN_INTERFACE_IID "com.winmmm10.PluginInterface/1.0"
-Q_DECLARE_INTERFACE(PluginInterface, PLUGIN_INTERFACE_IID)
 
 } // namespace WinMMM10
 

@@ -247,9 +247,45 @@ set(ALL_HEADERS
 )
 
 # ============================================================================
+# Core Library (shared between main app and tests)
+# ============================================================================
+set(CORE_LIB_SOURCES
+    ${CORE_SOURCES}
+    ${BINARY_SOURCES}
+    ${MAPS_SOURCES}
+    ${HEURISTICS_SOURCES}
+    ${VALIDATION_SOURCES}
+    ${MAPPACKS_SOURCES}
+)
+
+set(CORE_LIB_HEADERS
+    ${CORE_HEADERS}
+    ${BINARY_HEADERS}
+    ${MAPS_HEADERS}
+    ${HEURISTICS_HEADERS}
+    ${VALIDATION_HEADERS}
+    ${MAPPACKS_HEADERS}
+)
+
+add_library(${PROJECT_NAME}_Core STATIC ${CORE_LIB_SOURCES} ${CORE_LIB_HEADERS})
+
+target_include_directories(${PROJECT_NAME}_Core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(${PROJECT_NAME}_Core PUBLIC
+    Qt6::Core
+)
+
+# ============================================================================
 # Main Executable Target
 # ============================================================================
-add_executable(${PROJECT_NAME} ${ALL_SOURCES} ${ALL_HEADERS})
+add_executable(${PROJECT_NAME} 
+    ${MAIN_SOURCE}
+    ${PLUGINS_SOURCES}
+    ${UI_SOURCES}
+    ${ALL_HEADERS}
+)
 
 # Precompiled Headers (PCH)
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.h)
@@ -261,6 +297,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
+    ${PROJECT_NAME}_Core
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
@@ -306,6 +343,7 @@ if(BUILD_TESTS)
     target_precompile_headers(${PROJECT_NAME}_Tests PRIVATE src/pch.h)
     
     target_link_libraries(${PROJECT_NAME}_Tests
+        ${PROJECT_NAME}_Core
         Qt6::Core
         Qt6::Test
         Qt6::Widgets
