@@ -316,7 +316,6 @@ if(BUILD_TESTS)
         Qt6::Core
         Qt6::Test
         Qt6::Widgets
-        Qt6::Json
     )
     target_include_directories(${PROJECT_NAME}_Tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
