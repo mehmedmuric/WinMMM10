@@ -1,126 +1,66 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 echo ============================================
 echo Building WinMMM10 Editor (Release)
 echo ============================================
 echo.
 
-REM Record start time
-set START_TIME=%TIME%
-set START_MS=%TIME:~-2%
+REM === PROJECT ROOT ===
+cd /d C:\WinMMM10 || exit /b 1
 
-REM Check if build directory exists, if not create it
-if not exist "build" mkdir build
-cd build
-
-REM Optional clean build
-set CLEAN_BUILD=0
-if "%1"=="--clean" (
-    set CLEAN_BUILD=1
-    echo Performing clean build (removing CMakeCache.txt)...
-    if exist CMakeCache.txt del /Q CMakeCache.txt
-    if exist CMakeFiles rmdir /S /Q CMakeFiles
-    echo.
+REM === CLEAN BUILD ===
+if exist out (
+    echo Cleaning previous build...
+    rmdir /s /q out
 )
 
-REM Configure CMake - Try multiple configurations
+REM === QT CONFIG ===
+set QT_ROOT=C:\Qt\6.10.1\msvc2019_64
+set Qt6_DIR=%QT_ROOT%\lib\cmake\Qt6
+
+echo Using Qt6 from:
+echo %Qt6_DIR%
+echo.
+
+REM === CONFIGURE CMAKE ===
 echo [1/2] Configuring CMake...
-echo.
 
-set CMAKE_CONFIG_SUCCESS=0
+cmake -S . -B out\build\x64-Release ^
+ -G "Visual Studio 18 2026" ^
+ -A x64 ^
+ -T v145 ^
+ -DCMAKE_PREFIX_PATH="%QT_ROOT%\lib\cmake"
 
-echo Trying Visual Studio 2022 with v143 toolset...
-cmake .. -G "Visual Studio 17 2022" -A x64 -T v143 -DCMAKE_BUILD_TYPE=Release
-if errorlevel 1 (
+IF ERRORLEVEL 1 (
     echo.
-    echo v143 toolset not found. Trying v142 toolset (VS 2019 compatible)...
-    cmake .. -G "Visual Studio 17 2022" -A x64 -T v142 -DCMAKE_BUILD_TYPE=Release
-    if errorlevel 1 (
-        echo.
-        echo v142 toolset not found. Trying Visual Studio 2019...
-        cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release
-        if errorlevel 1 (
-            set CMAKE_CONFIG_SUCCESS=1
-        )
-    )
-)
-
-if !CMAKE_CONFIG_SUCCESS!==1 (
-    echo.
-    echo ============================================
-    echo CMake configuration failed!
-    echo ============================================
-    echo.
-    echo SOLUTION: Install C++ build tools in Visual Studio
-    echo.
-    echo Option 1 (Recommended):
-    echo   1. Open Visual Studio Installer
-    echo   2. Click "Modify" on Visual Studio 2022
-    echo   3. Select "Desktop development with C++" workload
-    echo   4. Click "Modify" to install
-    echo   5. Run this script again
-    echo.
-    echo Option 2:
-    echo   Install Visual Studio 2019 with C++ tools
-    echo.
-    cd ..
+    echo ❌ CMake configuration failed
     pause
     exit /b 1
 )
 
-echo.
 echo Configuration successful!
-echo Build type: Release
 echo.
 
-REM Build in Release mode with parallel compilation
-echo [2/2] Building Release configuration (parallel compilation)...
-echo.
+REM === BUILD ===
+echo [2/2] Building Release...
 
-REM Use parallel builds (--parallel uses all available cores)
-cmake --build . --config Release --parallel
-if errorlevel 1 (
+cmake --build out\build\x64-Release --config Release --parallel
+
+IF ERRORLEVEL 1 (
     echo.
-    echo ============================================
-    echo Build failed!
-    echo ============================================
-    echo Check the error messages above for details.
-    echo.
-    cd ..
+    echo ❌ Build failed
     pause
     exit /b 1
 )
 
-REM Calculate elapsed time
-set END_TIME=%TIME%
-set END_MS=%END_TIME:~-2%
-
 echo.
 echo ============================================
-echo Build completed successfully!
+echo ✅ Build completed successfully!
 echo ============================================
-echo.
-echo Configuration: Release
-echo Build system: Visual Studio (Multi-config)
-echo Parallel compilation: Enabled
-echo.
 
-REM Try to display executable location (may vary based on generator)
-if exist "Release\WinMMM10Editor.exe" (
-    echo Executable location: build\Release\WinMMM10Editor.exe
-    echo.
-) else if exist "x64\Release\WinMMM10Editor.exe" (
-    echo Executable location: build\x64\Release\WinMMM10Editor.exe
-    echo.
-) else (
-    echo Executable location: Check build directory for WinMMM10Editor.exe
-    echo.
-)
-
-echo Start time: %START_TIME%
-echo End time: %END_TIME%
+echo Executable location:
+echo C:\WinMMM10\out\build\x64-Release\WinMMM10Editor.exe
 echo.
 
-cd ..
 pause
