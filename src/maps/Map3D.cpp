@@ -104,13 +104,13 @@ void Map3D::writeToBinary(uint8_t* data, size_t dataSize) const {
         
         for (size_t i = 0; i < axisCount && offset + axisElementSize <= dataSize; ++i) {
             if (axisElementSize == 2) {
-                uint16_t rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                uint16_t rawValue = ScalingEngine::physicalToRaw<uint16_t>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 EndiannessConverter::writeLittleEndian<uint16_t>(data + offset, rawValue);
             } else if (axisElementSize == 1) {
-                uint8_t rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                uint8_t rawValue = ScalingEngine::physicalToRaw<uint8_t>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 data[offset] = rawValue;
             } else if (axisElementSize == 4) {
-                float rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                float rawValue = ScalingEngine::physicalToRaw<float>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 EndiannessConverter::writeLittleEndian<float>(data + offset, rawValue);
             }
             offset += axisElementSize;
@@ -125,13 +125,13 @@ void Map3D::writeToBinary(uint8_t* data, size_t dataSize) const {
         
         for (size_t i = 0; i < axisCount && offset + axisElementSize <= dataSize; ++i) {
             if (axisElementSize == 2) {
-                uint16_t rawValue = ScalingEngine::physicalToRaw(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
+                uint16_t rawValue = ScalingEngine::physicalToRaw<uint16_t>(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
                 EndiannessConverter::writeLittleEndian<uint16_t>(data + offset, rawValue);
             } else if (axisElementSize == 1) {
-                uint8_t rawValue = ScalingEngine::physicalToRaw(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
+                uint8_t rawValue = ScalingEngine::physicalToRaw<uint8_t>(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
                 data[offset] = rawValue;
             } else if (axisElementSize == 4) {
-                float rawValue = ScalingEngine::physicalToRaw(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
+                float rawValue = ScalingEngine::physicalToRaw<float>(m_yAxis[i], m_definition.yAxis().factor(), m_definition.yAxis().offset());
                 EndiannessConverter::writeLittleEndian<float>(data + offset, rawValue);
             }
             offset += axisElementSize;
@@ -151,7 +151,7 @@ void Map3D::writeToBinary(uint8_t* data, size_t dataSize) const {
             size_t row = i / m_columns;
             size_t col = i % m_columns;
             double physical = getPhysicalValue(row, col);
-            float rawValue = ScalingEngine::physicalToRaw(physical, m_definition.factor(), m_definition.offset());
+            float rawValue = ScalingEngine::physicalToRaw<float>(physical, m_definition.factor(), m_definition.offset());
             EndiannessConverter::writeLittleEndian<float>(data + offset, rawValue);
         }
         offset += elementSize;
@@ -183,7 +183,7 @@ void Map3D::setPhysicalValue(size_t row, size_t col, double value) {
     if (row >= m_rows || col >= m_columns) {
         return;
     }
-    m_data[indexOf(row, col)] = ScalingEngine::physicalToRaw(value, m_definition.factor(), m_definition.offset());
+    m_data[indexOf(row, col)] = ScalingEngine::physicalToRaw<uint16_t>(value, m_definition.factor(), m_definition.offset());
 }
 
 double Map3D::getXAxisValue(size_t index) const {

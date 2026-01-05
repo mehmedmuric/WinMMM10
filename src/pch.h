@@ -49,10 +49,12 @@
 #include <QStyleFactory>
 
 // =====================
-// Qt OpenGL
+// Qt OpenGL (only for main app, not tests)
 // =====================
+#ifndef WINMMM10_TESTS
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#endif
 
 // Standard Library
 #include <cstdint>

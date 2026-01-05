@@ -29,8 +29,9 @@ public:
     virtual bool validateData(const uint8_t* data, size_t size) { return true; }
 };
 
+// Note: PluginInterface is not a QObject-derived class, so we use a simple string identifier
+// Plugins should implement this interface and be loaded dynamically
 #define PLUGIN_INTERFACE_IID "com.winmmm10.PluginInterface/1.0"
-Q_DECLARE_INTERFACE(PluginInterface, PLUGIN_INTERFACE_IID)
 
 } // namespace WinMMM10
 

@@ -202,7 +202,10 @@ void HexEditor::keyPressEvent(QKeyEvent* event) {
             setCursorAddress((m_cursorAddress / m_bytesPerLine) * m_bytesPerLine);
             break;
         case Qt::Key_End:
-            setCursorAddress(std::min((m_cursorAddress / m_bytesPerLine + 1) * m_bytesPerLine - 1, fileSize - 1));
+            {
+                size_t targetAddr = (m_cursorAddress / m_bytesPerLine + 1) * m_bytesPerLine - 1;
+                setCursorAddress((targetAddr < fileSize) ? targetAddr : fileSize - 1);
+            }
             break;
         case Qt::Key_0: case Qt::Key_1: case Qt::Key_2: case Qt::Key_3: case Qt::Key_4:
         case Qt::Key_5: case Qt::Key_6: case Qt::Key_7: case Qt::Key_8: case Qt::Key_9:

@@ -79,13 +79,13 @@ void Map2D::writeToBinary(uint8_t* data, size_t dataSize) const {
         
         for (size_t i = 0; i < axisCount && offset + axisElementSize <= dataSize; ++i) {
             if (axisElementSize == 2) {
-                uint16_t rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                uint16_t rawValue = ScalingEngine::physicalToRaw<uint16_t>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 EndiannessConverter::writeLittleEndian<uint16_t>(data + offset, rawValue);
             } else if (axisElementSize == 1) {
-                uint8_t rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                uint8_t rawValue = ScalingEngine::physicalToRaw<uint8_t>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 data[offset] = rawValue;
             } else if (axisElementSize == 4) {
-                float rawValue = ScalingEngine::physicalToRaw(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
+                float rawValue = ScalingEngine::physicalToRaw<float>(m_xAxis[i], m_definition.xAxis().factor(), m_definition.xAxis().offset());
                 EndiannessConverter::writeLittleEndian<float>(data + offset, rawValue);
             }
             offset += axisElementSize;
@@ -103,7 +103,7 @@ void Map2D::writeToBinary(uint8_t* data, size_t dataSize) const {
             data[offset] = static_cast<uint8_t>(m_data[i]);
         } else if (elementSize == 4) {
             double physical = getPhysicalValue(i);
-            float rawValue = ScalingEngine::physicalToRaw(physical, m_definition.factor(), m_definition.offset());
+            float rawValue = ScalingEngine::physicalToRaw<float>(physical, m_definition.factor(), m_definition.offset());
             EndiannessConverter::writeLittleEndian<float>(data + offset, rawValue);
         }
         offset += elementSize;
@@ -135,7 +135,7 @@ void Map2D::setPhysicalValue(size_t index, double value) {
     if (index >= m_data.size()) {
         return;
     }
-    m_data[index] = ScalingEngine::physicalToRaw(value, m_definition.factor(), m_definition.offset());
+    m_data[index] = ScalingEngine::physicalToRaw<uint16_t>(value, m_definition.factor(), m_definition.offset());
 }
 
 double Map2D::getXAxisValue(size_t index) const {

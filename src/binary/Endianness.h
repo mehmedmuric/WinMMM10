@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <cstring>
 
 namespace WinMMM10 {
 

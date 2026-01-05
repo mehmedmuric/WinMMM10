@@ -301,7 +301,8 @@ if(BUILD_TESTS)
     
     add_executable(${PROJECT_NAME}_Tests ${TEST_SOURCES} ${TEST_HEADERS})
     
-    # Precompiled Headers for tests (optional but recommended)
+    # Precompiled Headers for tests - define macro to exclude OpenGL
+    target_compile_definitions(${PROJECT_NAME}_Tests PRIVATE WINMMM10_TESTS)
     target_precompile_headers(${PROJECT_NAME}_Tests PRIVATE src/pch.h)
     
     target_link_libraries(${PROJECT_NAME}_Tests
