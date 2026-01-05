@@ -310,9 +310,12 @@ if(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
-    target_sources(${PROJECT_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/icon.rc
-    )
+    # Include icon.rc only if icon.ico exists
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/resources/icon.ico)
+        target_sources(${PROJECT_NAME} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/resources/icon.rc
+        )
+    endif()
 endif()
 
 # ============================================================================
