@@ -48,6 +48,32 @@ namespace {
         logToFile(message);
     }
     
+#ifdef _WIN32
+    // Windows SEH exception filter
+    LONG WINAPI SehExceptionFilter(EXCEPTION_POINTERS* ExceptionInfo) {
+        DWORD exceptionCode = ExceptionInfo->ExceptionRecord->ExceptionCode;
+        std::stringstream ss;
+        ss << "Windows SEH Exception: 0x" << std::hex << std::uppercase << exceptionCode;
+        std::string errorMsg = ss.str();
+        
+        logToBoth(errorMsg);
+        
+        if (QApplication::instance()) {
+            QMessageBox::critical(nullptr, "Fatal Error", 
+                QString("Application crashed with Windows exception:\n%1").arg(QString::fromStdString(errorMsg)));
+        } else {
+            MessageBoxA(nullptr, errorMsg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
+        }
+        
+        if (g_logFile.is_open()) {
+            logToFile("=== WinMMM10 Editor Session Crashed (SEH) ===");
+            g_logFile.close();
+        }
+        
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+#endif
+    
     void setupConsole() {
 #ifdef _WIN32
         // Allocate console for GUI application
@@ -104,104 +130,81 @@ int main(int argc, char* argv[]) {
     setupLogFile();
     setupConsole();
     
+#ifdef _WIN32
+    // Set up Windows SEH exception handler
+    SetUnhandledExceptionFilter(SehExceptionFilter);
+#endif
+    
     logToBoth("Starting WinMMM10 Editor...");
     
-#ifdef _WIN32
-    // Windows SEH exception handling
-    __try {
-#endif
-        try {
-            logToBoth("Creating QApplication...");
-            QApplication app(argc, argv);
-            logToBoth("QApplication created");
-            
-            app.setApplicationName(WinMMM10::Application::applicationName());
-            app.setOrganizationName(WinMMM10::Application::organizationName());
-            app.setApplicationVersion(WinMMM10::Application::version());
-            logToBoth("Application properties set");
-            
-            logToBoth("Applying dark theme...");
-            WinMMM10::DarkTheme::apply(&app);
-            logToBoth("Theme applied");
-            
-            logToBoth("Creating MainWindow...");
-            WinMMM10::MainWindow window;
-            logToBoth("MainWindow created successfully");
-            
-            logToBoth("Showing window...");
-            window.show();
-            logToBoth("Window shown, entering event loop");
-            
-            int result = app.exec();
-            logToBoth("Application event loop exited with code: " + std::to_string(result));
-            
-            if (g_logFile.is_open()) {
-                logToFile("=== WinMMM10 Editor Session Ended ===");
-                g_logFile.close();
-            }
-            
-            return result;
+    try {
+        logToBoth("Creating QApplication...");
+        QApplication app(argc, argv);
+        logToBoth("QApplication created");
+        
+        app.setApplicationName(WinMMM10::Application::applicationName());
+        app.setOrganizationName(WinMMM10::Application::organizationName());
+        app.setApplicationVersion(WinMMM10::Application::version());
+        logToBoth("Application properties set");
+        
+        logToBoth("Applying dark theme...");
+        WinMMM10::DarkTheme::apply(&app);
+        logToBoth("Theme applied");
+        
+        logToBoth("Creating MainWindow...");
+        WinMMM10::MainWindow window;
+        logToBoth("MainWindow created successfully");
+        
+        logToBoth("Showing window...");
+        window.show();
+        logToBoth("Window shown, entering event loop");
+        
+        int result = app.exec();
+        logToBoth("Application event loop exited with code: " + std::to_string(result));
+        
+        if (g_logFile.is_open()) {
+            logToFile("=== WinMMM10 Editor Session Ended ===");
+            g_logFile.close();
         }
-        catch (const std::exception& e) {
-            std::string errorMsg = "C++ Exception caught: " + std::string(e.what());
-            logToBoth(errorMsg);
-            
-            if (QApplication::instance()) {
-                QMessageBox::critical(nullptr, "Fatal Error", 
-                    QString("Application crashed:\n%1").arg(e.what()));
-            } else {
-                // Qt not initialized, show in console only
-                MessageBoxA(nullptr, errorMsg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
-            }
-            
-            if (g_logFile.is_open()) {
-                logToFile("=== WinMMM10 Editor Session Crashed ===");
-                g_logFile.close();
-            }
-            
-            return 1;
-        }
-        catch (...) {
-            std::string errorMsg = "Unknown C++ exception caught";
-            logToBoth(errorMsg);
-            
-            if (QApplication::instance()) {
-                QMessageBox::critical(nullptr, "Fatal Error", 
-                    "Application crashed with unknown exception");
-            } else {
-                MessageBoxA(nullptr, errorMsg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
-            }
-            
-            if (g_logFile.is_open()) {
-                logToFile("=== WinMMM10 Editor Session Crashed ===");
-                g_logFile.close();
-            }
-            
-            return 1;
-        }
-#ifdef _WIN32
+        
+        return result;
     }
-    __except(EXCEPTION_EXECUTE_HANDLER) {
-        DWORD exceptionCode = GetExceptionCode();
-        std::stringstream ss;
-        ss << "Windows SEH Exception caught: 0x" << std::hex << std::uppercase << exceptionCode;
-        std::string errorMsg = ss.str();
+    catch (const std::exception& e) {
+        std::string errorMsg = "C++ Exception caught: " + std::string(e.what());
         logToBoth(errorMsg);
         
         if (QApplication::instance()) {
             QMessageBox::critical(nullptr, "Fatal Error", 
-                QString("Application crashed with Windows exception:\n%1").arg(QString::fromStdString(errorMsg)));
+                QString("Application crashed:\n%1").arg(e.what()));
         } else {
+            // Qt not initialized, show in console only
             MessageBoxA(nullptr, errorMsg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
         }
         
         if (g_logFile.is_open()) {
-            logToFile("=== WinMMM10 Editor Session Crashed (SEH) ===");
+            logToFile("=== WinMMM10 Editor Session Crashed ===");
             g_logFile.close();
         }
         
         return 1;
     }
-#endif
+    catch (...) {
+        std::string errorMsg = "Unknown C++ exception caught";
+        logToBoth(errorMsg);
+        
+        if (QApplication::instance()) {
+            QMessageBox::critical(nullptr, "Fatal Error", 
+                "Application crashed with unknown exception");
+        } else {
+            MessageBoxA(nullptr, errorMsg.c_str(), "Fatal Error", MB_OK | MB_ICONERROR);
+        }
+        
+        if (g_logFile.is_open()) {
+            logToFile("=== WinMMM10 Editor Session Crashed ===");
+            g_logFile.close();
+        }
+        
+        return 1;
+    }
 }
 
