@@ -33,8 +33,10 @@ if not exist "%INNO_SETUP%" (
 )
 
 REM Compile the installer
+REM Change to project root directory so paths resolve correctly
 echo Compiling installer script...
-"%INNO_SETUP%" "installer\WinMMM10Editor.iss"
+cd /d %~dp0
+"%INNO_SETUP%" "%~dp0installer\WinMMM10Editor.iss"
 
 if errorlevel 1 (
     echo.
