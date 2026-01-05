@@ -47,12 +47,12 @@ void KessFileWriter::writeHeader(std::vector<uint8_t>& output) {
     output.resize(headerSize, 0);
     
     // Write ECU name (first 64 bytes)
-    size_t nameLen = std::min(m_ecuInfo.ecuName.size(), size_t(63));
+    size_t nameLen = (m_ecuInfo.ecuName.size() < 63) ? m_ecuInfo.ecuName.size() : 63;
     std::memcpy(output.data(), m_ecuInfo.ecuName.c_str(), nameLen);
     
     // Write ECU type (bytes 64-127)
     if (output.size() > 64) {
-        nameLen = std::min(m_ecuInfo.ecuType.size(), size_t(63));
+        nameLen = (m_ecuInfo.ecuType.size() < 63) ? m_ecuInfo.ecuType.size() : 63;
         std::memcpy(output.data() + 64, m_ecuInfo.ecuType.c_str(), nameLen);
     }
     

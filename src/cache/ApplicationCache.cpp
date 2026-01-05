@@ -257,7 +257,7 @@ void ApplicationCache::save() {
     // Save recent projects
     settings.beginWriteArray("recentProjects");
     for (size_t i = 0; i < m_recentProjects.size(); ++i) {
-        settings.setArrayIndex(i);
+        settings.setArrayIndex(static_cast<int>(i));
         settings.setValue("filepath", QString::fromStdString(m_recentProjects[i].filepath));
         settings.setValue("displayName", QString::fromStdString(m_recentProjects[i].displayName));
         settings.setValue("lastAccessed", m_recentProjects[i].lastAccessed);
@@ -267,7 +267,7 @@ void ApplicationCache::save() {
     // Save recent binaries
     settings.beginWriteArray("recentBinaries");
     for (size_t i = 0; i < m_recentBinaries.size(); ++i) {
-        settings.setArrayIndex(i);
+        settings.setArrayIndex(static_cast<int>(i));
         settings.setValue("filepath", QString::fromStdString(m_recentBinaries[i].filepath));
         settings.setValue("displayName", QString::fromStdString(m_recentBinaries[i].displayName));
         settings.setValue("lastAccessed", m_recentBinaries[i].lastAccessed);

@@ -123,7 +123,7 @@ void ProjectCache::load() {
         
         int mapCount = settings.beginReadArray("maps");
         for (int i = 0; i < mapCount; ++i) {
-            settings.setArrayIndex(i);
+            settings.setArrayIndex(static_cast<int>(i));
             CachedMapData mapData;
             mapData.mapName = settings.value("name").toString().toStdString();
             mapData.address = settings.value("address").toULongLong();
@@ -176,7 +176,7 @@ void ProjectCache::save() {
         settings.setValue("timestamp", cache.timestamp);
         settings.beginWriteArray("maps");
         for (size_t i = 0; i < cache.detectedMaps.size(); ++i) {
-            settings.setArrayIndex(i);
+            settings.setArrayIndex(static_cast<int>(i));
             const auto& mapData = cache.detectedMaps[i];
             settings.setValue("name", QString::fromStdString(mapData.mapName));
             settings.setValue("address", static_cast<qulonglong>(mapData.address));

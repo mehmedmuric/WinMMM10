@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cstring>
+#include <limits>
 
 namespace WinMMM10 {
 
@@ -80,8 +81,8 @@ void KessFileReader::extractEcuInfo(const std::vector<uint8_t>& data) {
     // This is a simplified extraction - actual format may vary
     
     // Look for common ECU identifier patterns
-    std::string dataStr(reinterpret_cast<const char*>(data.data()), 
-                       std::min(data.size(), size_t(1024)));
+    size_t maxSize = (data.size() < 1024) ? data.size() : 1024;
+    std::string dataStr(reinterpret_cast<const char*>(data.data()), maxSize);
     
     // Try to find version strings, ECU names, etc.
     // This would need to be customized based on actual KESS file format
@@ -89,7 +90,7 @@ void KessFileReader::extractEcuInfo(const std::vector<uint8_t>& data) {
     m_ecuInfo.fileSize = static_cast<uint32_t>(data.size());
     
     // Store first 256 bytes as header data
-    size_t headerSize = std::min(data.size(), size_t(256));
+    size_t headerSize = (data.size() < 256) ? data.size() : 256;
     m_ecuInfo.headerData.assign(data.begin(), data.begin() + headerSize);
 }
 

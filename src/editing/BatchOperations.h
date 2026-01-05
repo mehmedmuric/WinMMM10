@@ -3,6 +3,7 @@
 #include "../maps/MapDefinition.h"
 #include "../binary/BinaryFile.h"
 #include <vector>
+#include <functional>
 #include <cstdint>
 #include <cstddef>
 
