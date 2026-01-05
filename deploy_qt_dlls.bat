@@ -79,6 +79,24 @@ copy /Y "%QT_ROOT%\bin\Qt6OpenGL.dll" "%EXE_DIR%\" >nul 2>&1 && echo   Qt6OpenGL
 copy /Y "%QT_ROOT%\bin\Qt6OpenGLWidgets.dll" "%EXE_DIR%\" >nul 2>&1 && echo   Qt6OpenGLWidgets.dll
 copy /Y "%QT_ROOT%\bin\Qt6Svg.dll" "%EXE_DIR%\" >nul 2>&1 && echo   Qt6Svg.dll
 
+REM === COPY ICU DLLS (International Components for Unicode) ===
+echo Copying ICU DLLs...
+if exist "%QT_ROOT%\bin\icuuc*.dll" (
+    for %%f in ("%QT_ROOT%\bin\icuuc*.dll") do (
+        copy /Y "%%f" "%EXE_DIR%\" >nul 2>&1 && echo   %%~nxf
+    )
+)
+if exist "%QT_ROOT%\bin\icudt*.dll" (
+    for %%f in ("%QT_ROOT%\bin\icudt*.dll") do (
+        copy /Y "%%f" "%EXE_DIR%\" >nul 2>&1 && echo   %%~nxf
+    )
+)
+if exist "%QT_ROOT%\bin\icuin*.dll" (
+    for %%f in ("%QT_ROOT%\bin\icuin*.dll") do (
+        copy /Y "%%f" "%EXE_DIR%\" >nul 2>&1 && echo   %%~nxf
+    )
+)
+
 REM === COPY PLATFORM PLUGIN ===
 set PLATFORM_DIR=%EXE_DIR%\platforms
 if not exist "%PLATFORM_DIR%" mkdir "%PLATFORM_DIR%"
