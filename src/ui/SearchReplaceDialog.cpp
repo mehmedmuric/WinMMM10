@@ -1,7 +1,6 @@
 #include "SearchReplaceDialog.h"
 #include <QDialogButtonBox>
 #include <QMessageBox>
-#include <QRegExpValidator>
 
 namespace WinMMM10 {
 

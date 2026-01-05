@@ -89,7 +89,6 @@ private:
     ProjectManager m_projectManager;
     BinaryFile m_binaryFile;
     MapDetector m_mapDetector;
-    CacheManager m_cacheManager;
     BookmarkManager m_bookmarkManager;
     AnnotationManager m_annotationManager;
     HexSearch* m_hexSearch{nullptr};

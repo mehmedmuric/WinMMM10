@@ -385,6 +385,29 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} opengl32)
 endif()
 
+# Windows-specific: Auto-deploy Qt DLLs after build
+if(WIN32)
+    # Find windeployqt tool
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS ${Qt6_DIR}/../../../bin ${Qt6_DIR}/../../bin)
+    
+    if(WINDEPLOYQT_EXECUTABLE)
+        # Use windeployqt for automatic DLL deployment
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${WINDEPLOYQT_EXECUTABLE}
+                --release
+                --compiler-runtime
+                --no-translations
+                --no-system-d3d-compiler
+                --no-opengl-sw
+                $<TARGET_FILE:${PROJECT_NAME}>
+            COMMENT "Deploying Qt DLLs using windeployqt..."
+        )
+    else()
+        # Fallback: Use batch script if windeployqt not found
+        message(STATUS "windeployqt not found, DLLs will be deployed manually via deploy_qt_dlls.bat")
+    endif()
+endif()
+
 # Windows specific
 if(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES

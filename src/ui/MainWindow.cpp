@@ -15,7 +15,6 @@ namespace WinMMM10 {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
-    , m_cacheManager(CacheManager::instance())
 {
     Settings::instance().load();
     CacheManager::instance().applicationCache().load();
