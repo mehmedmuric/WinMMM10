@@ -124,11 +124,15 @@ void MainWindow::setupMenus() {
     
     // Tools menu
     QMenu* toolsMenu = menuBar()->addMenu("&Tools");
-    toolsMenu->addAction("&Cache Settings...", this, &MainWindow::showCacheSettings);
+    QAction* cacheSettingsAction = new QAction("&Cache Settings...", this);
+    connect(cacheSettingsAction, &QAction::triggered, this, &MainWindow::showCacheSettings);
+    toolsMenu->addAction(cacheSettingsAction);
     
     // Help menu
     QMenu* helpMenu = menuBar()->addMenu("&Help");
-    helpMenu->addAction("&About", this, &MainWindow::about);
+    QAction* aboutAction = new QAction("&About", this);
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
+    helpMenu->addAction(aboutAction);
 }
 
 void MainWindow::setupToolbars() {
@@ -151,7 +155,7 @@ void MainWindow::setupDocks() {
     m_mapList = new MapListWidget(mapsDock);
     connect(m_mapList, &MapListWidget::mapSelected, this, &MainWindow::onMapSelected);
     connect(m_mapList, &MapListWidget::mapDoubleClicked, this, &MainWindow::onMapDoubleClicked);
-    connect(m_mapList, &MapListWidget::mapDeleteRequested, this, &MainWindow::deleteMap);
+    connect(m_mapList, &MapListWidget::mapDeleteRequested, this, [this](int) { deleteMap(); });
     mapsDock->setWidget(m_mapList);
     addDockWidget(Qt::RightDockWidgetArea, mapsDock);
     
@@ -662,6 +666,8 @@ void MainWindow::closeEvent(QCloseEvent* event) {
         event->ignore();
     }
 }
+
+MainWindow::~MainWindow() = default;
 
 } // namespace WinMMM10
 
