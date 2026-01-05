@@ -63,7 +63,7 @@ echo ✅ Build completed successfully!
 echo ============================================
 
 echo Executable location:
-echo C:\WinMMM10\out\build\x64-Release\WinMMM10Editor.exe
+echo C:\WinMMM10\out\build\x64-Release\Release\WinMMM10Editor.exe
 echo.
 
 pause
