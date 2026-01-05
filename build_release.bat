@@ -16,7 +16,7 @@ if exist out (
 )
 
 REM === QT CONFIG ===
-set QT_ROOT=C:\Qt\6.10.1\msvc2019_64
+set QT_ROOT=C:\Qt\6.10.1\msvc2022_64
 set Qt6_DIR=%QT_ROOT%\lib\cmake\Qt6
 
 echo Using Qt6 from:
