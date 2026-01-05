@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QDebug>
 #include <sstream>
 #include <iomanip>
 
@@ -16,23 +17,42 @@ namespace WinMMM10 {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
+    qDebug() << "MainWindow: Loading settings...";
     Settings::instance().load();
-    CacheManager::instance().applicationCache().load();
+    qDebug() << "MainWindow: Settings loaded";
     
+    qDebug() << "MainWindow: Loading cache...";
+    CacheManager::instance().applicationCache().load();
+    qDebug() << "MainWindow: Cache loaded";
+    
+    qDebug() << "MainWindow: Initializing editing engines...";
     // Initialize editing engines
     m_hexSearch = new HexSearch(&m_binaryFile);
     m_batchOps = new BatchOperations(&m_binaryFile);
     m_mapMath = new MapMath(&m_binaryFile);
     m_interpolationEngine = new InterpolationEngine(&m_binaryFile);
+    qDebug() << "MainWindow: Editing engines initialized";
     
+    qDebug() << "MainWindow: Setting up UI...";
     setupUI();
+    qDebug() << "MainWindow: UI setup complete";
+    
+    qDebug() << "MainWindow: Setting up menus...";
     setupMenus();
+    qDebug() << "MainWindow: Menus setup complete";
+    
+    qDebug() << "MainWindow: Setting up toolbars...";
     setupToolbars();
+    qDebug() << "MainWindow: Toolbars setup complete";
+    
+    qDebug() << "MainWindow: Setting up docks...";
     setupDocks();
+    qDebug() << "MainWindow: Docks setup complete";
     
     updateWindowTitle();
     setMinimumSize(1024, 768);
     resize(1280, 800);
+    qDebug() << "MainWindow: Constructor complete";
 }
 
 void MainWindow::setupUI() {
