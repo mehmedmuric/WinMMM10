@@ -305,6 +305,11 @@ target_link_libraries(${PROJECT_NAME}
     Qt6::OpenGLWidgets
 )
 
+# Windows-specific: Link OpenGL library for legacy OpenGL functions
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} opengl32)
+endif()
+
 # Windows specific
 if(WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES
