@@ -1,55 +1,58 @@
 #pragma once
 
+// =====================
 // Qt Core
-#include <QtCore/QtCore>
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-#include <QtCore/QVariant>
-#include <QtCore/QFile>
-#include <QtCore/QDir>
-#include <QtCore/QIODevice>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-#include <QtCore/QJsonArray>
-#include <QtCore/QStandardPaths>
+// =====================
+#include <QObject>
+#include <QString>
+#include <QStringList>
+#include <QVariant>
+#include <QFile>
+#include <QDir>
+#include <QIODevice>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QStandardPaths>
 
+// =====================
 // Qt Gui
-#include <QtGui/QtGui>
-#include <QtGui/QFont>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QWheelEvent>
-#include <QtGui/QPaintEvent>
-#include <QtGui/QResizeEvent>
-#include <QtGui/QCloseEvent>
+// =====================
+#include <QFont>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QWheelEvent>
+#include <QPaintEvent>
+#include <QResizeEvent>
+#include <QCloseEvent>
+#include <QMatrix4x4>
+#include <QVector3D>
 
+// =====================
 // Qt Widgets
-#include <QtWidgets/QtWidgets>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QMenuBar>
-#include <QtWidgets/QToolBar>
-#include <QtWidgets/QDockWidget>
-#include <QtWidgets/QSplitter>
-#include <QtWidgets/QTabWidget>
-#include <QtWidgets/QAction>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QInputDialog>
-#include <QtWidgets/QScrollBar>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QStyleFactory>
+// =====================
+#include <QApplication>
+#include <QMainWindow>
+#include <QWidget>
+#include <QMenuBar>
+#include <QToolBar>
+#include <QDockWidget>
+#include <QSplitter>
+#include <QTabWidget>
+#include <QAction>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QScrollBar>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QStyleFactory>
 
+// =====================
 // Qt OpenGL
-#include <QtOpenGL/QOpenGLWidget>
-#include <QtOpenGL/QOpenGLFunctions>
-
-// Qt OpenGL Types
-#include <QtGui/QMatrix4x4>
-#include <QtGui/QVector3D>
+// =====================
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
 
 // Standard Library
 #include <cstdint>
