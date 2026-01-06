@@ -103,7 +103,6 @@ set(VALIDATION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/validation)
 set(MAPPACKS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/mappacks)
 set(PLUGINS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins)
 set(CACHE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/cache)
-set(KESS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/kess)
 set(EDITING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/editing)
 
 # Core sources
@@ -215,20 +214,6 @@ set(CACHE_HEADERS
     ${CACHE_DIR}/CacheManager.h
 )
 
-# KESS sources
-set(KESS_SOURCES
-    ${KESS_DIR}/KessFileReader.cpp
-    ${KESS_DIR}/KessFileWriter.cpp
-    ${KESS_DIR}/KessMapConverter.cpp
-)
-
-set(KESS_HEADERS
-    ${KESS_DIR}/KessEcuInfo.h
-    ${KESS_DIR}/KessFileReader.h
-    ${KESS_DIR}/KessFileWriter.h
-    ${KESS_DIR}/KessMapConverter.h
-)
-
 # Editing sources
 set(EDITING_SOURCES
     ${EDITING_DIR}/MapComparator.cpp
@@ -297,7 +282,6 @@ set(ALL_SOURCES
     ${MAPPACKS_SOURCES}
     ${PLUGINS_SOURCES}
     ${CACHE_SOURCES}
-    ${KESS_SOURCES}
     ${EDITING_SOURCES}
     ${UI_SOURCES}
 )
@@ -311,7 +295,6 @@ set(ALL_HEADERS
     ${MAPPACKS_HEADERS}
     ${PLUGINS_HEADERS}
     ${CACHE_HEADERS}
-    ${KESS_HEADERS}
     ${EDITING_HEADERS}
     ${UI_HEADERS}
 )
@@ -327,7 +310,6 @@ set(CORE_LIB_SOURCES
     ${VALIDATION_SOURCES}
     ${MAPPACKS_SOURCES}
     ${CACHE_SOURCES}
-    ${KESS_SOURCES}
     ${EDITING_SOURCES}
 )
 
@@ -339,7 +321,6 @@ set(CORE_LIB_HEADERS
     ${VALIDATION_HEADERS}
     ${MAPPACKS_HEADERS}
     ${CACHE_HEADERS}
-    ${KESS_HEADERS}
     ${EDITING_HEADERS}
 )
 

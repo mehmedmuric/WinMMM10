@@ -34,7 +34,6 @@
 #include "../editing/BatchOperations.h"
 #include "../editing/MapMath.h"
 #include "../editing/InterpolationEngine.h"
-#include "../kess/KessMapConverter.h"
 
 namespace WinMMM10 {
 
@@ -74,8 +73,6 @@ private slots:
     void mapMathOperations();
     void interpolateMap();
     void smoothMap();
-    void importKessFile();
-    void exportKessFile();
     void about();
 
 private:
@@ -100,7 +97,6 @@ private:
     BatchOperations* m_batchOps{nullptr};
     MapMath* m_mapMath{nullptr};
     InterpolationEngine* m_interpolationEngine{nullptr};
-    KessMapConverter* m_kessConverter{nullptr};
 
     // ==== UI COMPONENTS (pointers, unchanged) ====
     HexEditorWidget* m_hexEditor{nullptr};
@@ -134,8 +130,6 @@ private:
     QAction* m_mapMathAction{nullptr};
     QAction* m_interpolateAction{nullptr};
     QAction* m_smoothAction{nullptr};
-    QAction* m_importKessAction{nullptr};
-    QAction* m_exportKessAction{nullptr};
 };
 
 } // namespace WinMMM10

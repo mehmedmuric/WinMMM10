@@ -34,7 +34,6 @@ MainWindow::MainWindow(QWidget* parent)
     m_batchOps = new BatchOperations(m_binaryFile);
     m_mapMath = new MapMath(m_binaryFile);
     m_interpolationEngine = new InterpolationEngine(m_binaryFile);
-    m_kessConverter = new KessMapConverter();
 
     qDebug() << "MainWindow: Editing engines and core objects allocated";
 
@@ -104,6 +103,14 @@ MainWindow::MainWindow(QWidget* parent)
         }
         catch (const std::exception& e) {
             qWarning() << "MainWindow: Failed to initialize Safe Mode:" << e.what();
+        }
+        
+        // Set bookmark and annotation managers after UI is fully ready
+        if (m_bookmarksPanel && m_bookmarkManager) {
+            m_bookmarksPanel->setBookmarkManager(m_bookmarkManager);
+        }
+        if (m_annotationsPanel && m_annotationManager) {
+            m_annotationsPanel->setAnnotationManager(m_annotationManager);
         }
     });
 
@@ -184,10 +191,6 @@ void MainWindow::setupMenus() {
     mapMenu->addSeparator();
     mapMenu->addAction("&Export Definitions...", this, &MainWindow::exportMapDefinitions);
     mapMenu->addAction("&Import Definitions...", this, &MainWindow::importMapDefinitions);
-    mapMenu->addSeparator();
-    m_importKessAction = mapMenu->addAction("Import &KESS File...", this, &MainWindow::importKessFile);
-    m_exportKessAction = mapMenu->addAction("Export to &KESS File...", this, &MainWindow::exportKessFile);
-    m_exportKessAction->setEnabled(false);
     
     // Edit menu
     QMenu* editMenu = menuBar()->addMenu("&Edit");
@@ -269,7 +272,7 @@ void MainWindow::setupDocks() {
     qDebug() << "MainWindow::setupDocks(): Creating Bookmarks dock...";
     m_bookmarksPanel = new BookmarksPanel(this);
     m_bookmarksPanel->setObjectName("BookmarksDock");
-    m_bookmarksPanel->setBookmarkManager(m_bookmarkManager);
+    // DON'T call setBookmarkManager here - defer it to avoid stack overflow during construction
     connect(m_bookmarksPanel, &BookmarksPanel::bookmarkDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
             m_hexEditor->hexEditor()->goToAddress(address);
@@ -282,7 +285,7 @@ void MainWindow::setupDocks() {
     qDebug() << "MainWindow::setupDocks(): Creating Annotations dock...";
     m_annotationsPanel = new AnnotationsPanel(this);
     m_annotationsPanel->setObjectName("AnnotationsDock");
-    m_annotationsPanel->setAnnotationManager(m_annotationManager);
+    // DON'T call setAnnotationManager here - defer it to avoid stack overflow during construction
     connect(m_annotationsPanel, &AnnotationsPanel::annotationDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
             m_hexEditor->hexEditor()->goToAddress(address);
@@ -375,7 +378,6 @@ void MainWindow::openProject() {
             m_mapMathAction->setEnabled(true);
             m_interpolateAction->setEnabled(true);
             m_smoothAction->setEnabled(true);
-            m_exportKessAction->setEnabled(true);
             
             // Update recent files menus
             updateRecentFilesMenus();
@@ -729,49 +731,6 @@ void MainWindow::smoothMap() {
     }
 }
 
-void MainWindow::importKessFile() {
-    QString filepath = QFileDialog::getOpenFileName(this, "Import KESS File", "", 
-                                                    "KESS Files (*.kess *.ori *.mod);;All Files (*.*)");
-    if (!filepath.isEmpty()) {
-        Project* project = m_projectManager->currentProject();
-        if (!project) {
-            // Create a new project for import
-            newProject();
-            project = m_projectManager->currentProject();
-        }
-        
-        if (project && m_kessConverter->importKessFile(filepath.toStdString(), *project)) {
-            // Refresh map list
-            m_mapList->clearMaps();
-            for (size_t i = 0; i < project->mapCount(); ++i) {
-                m_mapList->addMap(project->getMap(i));
-            }
-            m_projectManager->markChanged();
-            updateWindowTitle();
-            QMessageBox::information(this, "Import", "KESS file imported successfully.");
-        } else {
-            QMessageBox::critical(this, "Error", "Failed to import KESS file.");
-        }
-    }
-}
-
-void MainWindow::exportKessFile() {
-    if (!m_projectManager->hasCurrentProject()) {
-        return;
-    }
-    
-    QString filepath = QFileDialog::getSaveFileName(this, "Export to KESS File", "", 
-                                                   "KESS Files (*.kess);;All Files (*.*)");
-    if (!filepath.isEmpty()) {
-        Project* project = m_projectManager->currentProject();
-        if (m_kessConverter->exportToKessFile(*project, filepath.toStdString())) {
-            QMessageBox::information(this, "Export", "Project exported to KESS file successfully.");
-        } else {
-            QMessageBox::critical(this, "Error", "Failed to export to KESS file.");
-        }
-    }
-}
-
 void MainWindow::about() {
     QMessageBox::about(this, "About WinMMM10 Editor",
                       "WinMMM10 Editor v1.0.0\n\n"
@@ -894,7 +853,6 @@ MainWindow::~MainWindow() {
     delete m_batchOps;
     delete m_mapMath;
     delete m_interpolationEngine;
-    delete m_kessConverter;
 }
 
 } // namespace WinMMM10
