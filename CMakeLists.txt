@@ -112,6 +112,7 @@ set(CORE_SOURCES
     ${CORE_DIR}/Project.cpp
     ${CORE_DIR}/ProjectManager.cpp
     ${CORE_DIR}/Settings.cpp
+    ${CORE_DIR}/SafeModeManager.cpp
     ${CORE_DIR}/BookmarkManager.cpp
     ${CORE_DIR}/AnnotationManager.cpp
 )
@@ -121,6 +122,7 @@ set(CORE_HEADERS
     ${CORE_DIR}/Project.h
     ${CORE_DIR}/ProjectManager.h
     ${CORE_DIR}/Settings.h
+    ${CORE_DIR}/SafeModeManager.h
     ${CORE_DIR}/BookmarkManager.h
     ${CORE_DIR}/AnnotationManager.h
 )

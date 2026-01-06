@@ -53,6 +53,16 @@ public:
     bool hasXAxis() const { return m_xAxis.count() > 0; }
     bool hasYAxis() const { return m_yAxis.count() > 0; }
     
+    // Safe Mode value limits
+    double hardMin() const { return m_hardMin; }
+    void setHardMin(double min) { m_hardMin = min; }
+    double hardMax() const { return m_hardMax; }
+    void setHardMax(double max) { m_hardMax = max; }
+    double warningMin() const { return m_warningMin; }
+    void setWarningMin(double min) { m_warningMin = min; }
+    double warningMax() const { return m_warningMax; }
+    void setWarningMax(double max) { m_warningMax = max; }
+    
     size_t dataSize() const;
     size_t totalSize() const;
 
@@ -68,6 +78,12 @@ private:
     std::string m_unit;
     MapAxis m_xAxis;
     MapAxis m_yAxis;
+    
+    // Safe Mode limits (defaults allow wide range)
+    double m_hardMin{0.0};
+    double m_hardMax{10000.0};
+    double m_warningMin{0.0};
+    double m_warningMax{10000.0};
 };
 
 } // namespace WinMMM10

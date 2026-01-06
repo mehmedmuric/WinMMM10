@@ -25,6 +25,7 @@ void Settings::load() {
         m_lastProjectPath = settings.value("lastProjectPath", "").toString().toStdString();
         m_lastBinaryPath = settings.value("lastBinaryPath", "").toString().toStdString();
         m_autoCleanupCache = settings.value("autoCleanupCache", false).toBool();
+        m_safeModeEnabled = settings.value("safeModeEnabled", true).toBool(); // Default: enabled
     }
     catch (const std::exception& e) {
         qWarning() << "Settings: Exception during load:" << e.what();
@@ -49,6 +50,7 @@ void Settings::save() {
         settings.setValue("lastProjectPath", QString::fromStdString(m_lastProjectPath));
         settings.setValue("lastBinaryPath", QString::fromStdString(m_lastBinaryPath));
         settings.setValue("autoCleanupCache", m_autoCleanupCache);
+        settings.setValue("safeModeEnabled", m_safeModeEnabled);
         settings.sync();
     }
     catch (const std::exception& e) {

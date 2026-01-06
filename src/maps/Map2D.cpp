@@ -1,6 +1,9 @@
 #include "Map2D.h"
 #include "ScalingEngine.h"
 #include "binary/Endianness.h"
+#include "../core/SafeModeManager.h"
+#include <QMessageBox>
+#include <QDebug>
 #include <cstring>
 #include <algorithm>
 
@@ -121,6 +124,31 @@ void Map2D::setRawValue(size_t index, uint16_t value) {
     if (index >= m_data.size()) {
         return;
     }
+    
+    // Convert to physical value for Safe Mode validation
+    double physicalValue = ScalingEngine::rawToPhysical(value, m_definition.factor(), m_definition.offset());
+    
+    // Safe Mode validation
+    SafeModeManager::ValueLimits limits;
+    limits.hardMin = m_definition.hardMin();
+    limits.hardMax = m_definition.hardMax();
+    limits.warningMin = m_definition.warningMin();
+    limits.warningMax = m_definition.warningMax();
+    
+    std::string reason;
+    auto result = SafeModeManager::instance().validateValue(physicalValue, limits, reason);
+    
+    if (result == SafeModeManager::ValidationResult::Blocked) {
+        SafeModeManager::instance().logBlock(reason);
+        // Don't change the value
+        return;
+    }
+    
+    if (result == SafeModeManager::ValidationResult::Warning) {
+        SafeModeManager::instance().logWarning(reason);
+        // Allow but warn
+    }
+    
     m_data[index] = value;
 }
 
@@ -135,6 +163,28 @@ void Map2D::setPhysicalValue(size_t index, double value) {
     if (index >= m_data.size()) {
         return;
     }
+    
+    // Safe Mode validation
+    SafeModeManager::ValueLimits limits;
+    limits.hardMin = m_definition.hardMin();
+    limits.hardMax = m_definition.hardMax();
+    limits.warningMin = m_definition.warningMin();
+    limits.warningMax = m_definition.warningMax();
+    
+    std::string reason;
+    auto result = SafeModeManager::instance().validateValue(value, limits, reason);
+    
+    if (result == SafeModeManager::ValidationResult::Blocked) {
+        SafeModeManager::instance().logBlock(reason);
+        // Don't change the value
+        return;
+    }
+    
+    if (result == SafeModeManager::ValidationResult::Warning) {
+        SafeModeManager::instance().logWarning(reason);
+        // Allow but warn
+    }
+    
     m_data[index] = ScalingEngine::physicalToRaw<uint16_t>(value, m_definition.factor(), m_definition.offset());
 }
 

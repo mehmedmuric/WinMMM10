@@ -161,8 +161,20 @@ void HexEditor::mouseMoveEvent(QMouseEvent* event) {
     QWidget::mouseMoveEvent(event);
 }
 
+void HexEditor::setReadOnly(bool readOnly) {
+    m_readOnly = readOnly;
+    setToolTip(readOnly ? "Hex editing disabled in Safe Mode" : "");
+    update();
+}
+
 void HexEditor::keyPressEvent(QKeyEvent* event) {
     if (!m_binaryFile || !m_binaryFile->isLoaded()) {
+        QWidget::keyPressEvent(event);
+        return;
+    }
+    
+    // Block editing when read-only (Safe Mode)
+    if (m_readOnly) {
         QWidget::keyPressEvent(event);
         return;
     }

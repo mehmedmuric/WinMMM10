@@ -17,6 +17,9 @@ public:
     bool autoCleanupCache() const { return m_autoCleanupCache; }
     void setAutoCleanupCache(bool enabled) { m_autoCleanupCache = enabled; }
     
+    bool safeModeEnabled() const { return m_safeModeEnabled; }
+    void setSafeModeEnabled(bool enabled) { m_safeModeEnabled = enabled; }
+    
     void load();
     void save();
 
@@ -29,6 +32,7 @@ private:
     std::string m_lastProjectPath;
     std::string m_lastBinaryPath;
     bool m_autoCleanupCache{false};
+    bool m_safeModeEnabled{true}; // Default: enabled
 };
 
 } // namespace WinMMM10

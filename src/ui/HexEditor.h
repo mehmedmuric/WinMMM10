@@ -31,6 +31,9 @@ public:
     bool canUndo() const;
     bool canRedo() const;
     
+    void setReadOnly(bool readOnly);
+    bool isReadOnly() const { return m_readOnly; }
+    
 public slots:
     void undo();
     void redo();
@@ -64,6 +67,7 @@ private:
     size_t m_cursorAddress{0};
     bool m_hexArea{true}; // true = hex area, false = ascii area
     bool m_insertMode{false};
+    bool m_readOnly{false};
     
     QScrollBar* m_scrollBar{nullptr};
     

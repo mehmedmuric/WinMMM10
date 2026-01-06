@@ -12,13 +12,16 @@ StatusBar::StatusBar(QWidget* parent)
     m_selectionLabel = new QLabel("");
     m_checksumLabel = new QLabel("");
     m_messageLabel = new QLabel("Ready");
+    m_safeModeLabel = new QLabel("");
     
     m_selectionLabel->setVisible(false);
     m_checksumLabel->setVisible(false);
+    m_safeModeLabel->setStyleSheet("color: green; font-weight: bold;");
     
     addWidget(m_addressLabel);
     addPermanentWidget(m_selectionLabel);
     addPermanentWidget(m_checksumLabel);
+    addPermanentWidget(m_safeModeLabel);
     addPermanentWidget(m_fileLabel);
     addPermanentWidget(m_messageLabel);
 }
@@ -77,6 +80,17 @@ void StatusBar::setChecksumStatus(const QString& status) {
 void StatusBar::clearChecksumStatus() {
     m_checksumLabel->setText("");
     m_checksumLabel->setVisible(false);
+}
+
+void StatusBar::setSafeModeStatus(bool enabled) {
+    if (enabled) {
+        m_safeModeLabel->setText("SAFE MODE ON");
+        m_safeModeLabel->setStyleSheet("color: green; font-weight: bold;");
+        m_safeModeLabel->setVisible(true);
+    } else {
+        m_safeModeLabel->setText("");
+        m_safeModeLabel->setVisible(false);
+    }
 }
 
 } // namespace WinMMM10

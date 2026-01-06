@@ -1,6 +1,9 @@
 #include "Map3D.h"
 #include "ScalingEngine.h"
 #include "binary/Endianness.h"
+#include "../core/SafeModeManager.h"
+#include <QMessageBox>
+#include <QDebug>
 #include <cstring>
 #include <algorithm>
 
@@ -169,6 +172,31 @@ void Map3D::setRawValue(size_t row, size_t col, uint16_t value) {
     if (row >= m_rows || col >= m_columns) {
         return;
     }
+    
+    // Convert to physical value for Safe Mode validation
+    double physicalValue = ScalingEngine::rawToPhysical(value, m_definition.factor(), m_definition.offset());
+    
+    // Safe Mode validation
+    SafeModeManager::ValueLimits limits;
+    limits.hardMin = m_definition.hardMin();
+    limits.hardMax = m_definition.hardMax();
+    limits.warningMin = m_definition.warningMin();
+    limits.warningMax = m_definition.warningMax();
+    
+    std::string reason;
+    auto result = SafeModeManager::instance().validateValue(physicalValue, limits, reason);
+    
+    if (result == SafeModeManager::ValidationResult::Blocked) {
+        SafeModeManager::instance().logBlock(reason);
+        // Don't change the value
+        return;
+    }
+    
+    if (result == SafeModeManager::ValidationResult::Warning) {
+        SafeModeManager::instance().logWarning(reason);
+        // Allow but warn
+    }
+    
     m_data[indexOf(row, col)] = value;
 }
 
@@ -183,6 +211,28 @@ void Map3D::setPhysicalValue(size_t row, size_t col, double value) {
     if (row >= m_rows || col >= m_columns) {
         return;
     }
+    
+    // Safe Mode validation
+    SafeModeManager::ValueLimits limits;
+    limits.hardMin = m_definition.hardMin();
+    limits.hardMax = m_definition.hardMax();
+    limits.warningMin = m_definition.warningMin();
+    limits.warningMax = m_definition.warningMax();
+    
+    std::string reason;
+    auto result = SafeModeManager::instance().validateValue(value, limits, reason);
+    
+    if (result == SafeModeManager::ValidationResult::Blocked) {
+        SafeModeManager::instance().logBlock(reason);
+        // Don't change the value
+        return;
+    }
+    
+    if (result == SafeModeManager::ValidationResult::Warning) {
+        SafeModeManager::instance().logWarning(reason);
+        // Allow but warn
+    }
+    
     m_data[indexOf(row, col)] = ScalingEngine::physicalToRaw<uint16_t>(value, m_definition.factor(), m_definition.offset());
 }
 

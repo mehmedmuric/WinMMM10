@@ -23,9 +23,9 @@ MainWindow::MainWindow(QWidget* parent)
     qDebug() << "MainWindow: All member variables should be initialized by now";
 
     // ==== SAFE HEAP ALLOCATION FOR VALUE MEMBERS ====
-    m_projectManager = new ProjectManager(this);
+    m_projectManager = new ProjectManager();
     m_binaryFile = new BinaryFile();
-    m_mapDetector = new MapDetector(this);
+    m_mapDetector = new MapDetector();
     m_bookmarkManager = new BookmarkManager();
     m_annotationManager = new AnnotationManager();
     m_hexSearch = new HexSearch(m_binaryFile);
@@ -64,7 +64,17 @@ MainWindow::MainWindow(QWidget* parent)
         qDebug() << "MainWindow: Loading settings (deferred)...";
         try {
             Settings::instance().load();
+            // Initialize Safe Mode from settings
+            SafeModeManager::instance().setEnabled(Settings::instance().safeModeEnabled());
             qDebug() << "MainWindow: Settings loaded successfully";
+            
+            // Update Safe Mode status in UI
+            updateSafeModeStatus();
+            
+            // Set hex editor read-only state based on Safe Mode
+            if (m_hexEditor && m_hexEditor->hexEditor()) {
+                m_hexEditor->hexEditor()->setReadOnly(Settings::instance().safeModeEnabled());
+            }
         }
         catch (const std::exception& e) {
             qWarning() << "MainWindow: Failed to load settings:" << e.what();
@@ -78,6 +88,9 @@ MainWindow::MainWindow(QWidget* parent)
         catch (const std::exception& e) {
             qWarning() << "MainWindow: Failed to load cache:" << e.what();
         }
+        
+        // Update status bar with Safe Mode indicator
+        updateSafeModeStatus();
     });
 
     qDebug() << "MainWindow: Constructor complete";
@@ -174,6 +187,12 @@ void MainWindow::setupMenus() {
     QAction* cacheSettingsAction = new QAction("&Cache Settings...", this);
     connect(cacheSettingsAction, &QAction::triggered, this, &MainWindow::showCacheSettings);
     toolsMenu->addAction(cacheSettingsAction);
+    toolsMenu->addSeparator();
+    QAction* safeModeAction = new QAction("Safe Mode (WinOLS Style)", this);
+    safeModeAction->setCheckable(true);
+    safeModeAction->setChecked(Settings::instance().safeModeEnabled());
+    connect(safeModeAction, &QAction::triggered, this, &MainWindow::toggleSafeMode);
+    toolsMenu->addAction(safeModeAction);
     
     // Help menu
     QMenu* helpMenu = menuBar()->addMenu("&Help");
@@ -236,7 +255,7 @@ void MainWindow::setupDocks() {
     qDebug() << "MainWindow::setupDocks(): Creating Bookmarks dock...";
     m_bookmarksPanel = new BookmarksPanel(this);
     m_bookmarksPanel->setObjectName("BookmarksDock");
-    m_bookmarksPanel->setBookmarkManager(&m_bookmarkManager);
+    m_bookmarksPanel->setBookmarkManager(m_bookmarkManager);
     connect(m_bookmarksPanel, &BookmarksPanel::bookmarkDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
             m_hexEditor->hexEditor()->goToAddress(address);
@@ -249,7 +268,7 @@ void MainWindow::setupDocks() {
     qDebug() << "MainWindow::setupDocks(): Creating Annotations dock...";
     m_annotationsPanel = new AnnotationsPanel(this);
     m_annotationsPanel->setObjectName("AnnotationsDock");
-    m_annotationsPanel->setAnnotationManager(&m_annotationManager);
+    m_annotationsPanel->setAnnotationManager(m_annotationManager);
     connect(m_annotationsPanel, &AnnotationsPanel::annotationDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
             m_hexEditor->hexEditor()->goToAddress(address);
@@ -265,9 +284,9 @@ void MainWindow::setupDocks() {
 
 void MainWindow::updateWindowTitle() {
     QString title = "WinMMM10 Editor";
-    if (m_projectManager.hasCurrentProject()) {
-        title += " - " + QString::fromStdString(m_projectManager.currentProject()->name());
-        if (m_projectManager.hasUnsavedChanges()) {
+    if (m_projectManager->hasCurrentProject()) {
+        title += " - " + QString::fromStdString(m_projectManager->currentProject()->name());
+        if (m_projectManager->hasUnsavedChanges()) {
             title += "*";
         }
     }
@@ -283,10 +302,10 @@ void MainWindow::newProject() {
     if (dialog.exec() == QDialog::Accepted) {
         QString filepath = QFileDialog::getSaveFileName(this, "Save Project", "", "Project Files (*.wmm10)");
         if (!filepath.isEmpty()) {
-            m_projectManager.createProject(filepath.toStdString(), dialog.projectName().toStdString());
-            m_projectManager.currentProject()->setEcuName(dialog.ecuName().toStdString());
-            m_projectManager.currentProject()->setDescription(dialog.description().toStdString());
-            m_projectManager.currentProject()->setBinaryFilepath(dialog.binaryFilePath().toStdString());
+            m_projectManager->createProject(filepath.toStdString(), dialog.projectName().toStdString());
+            m_projectManager->currentProject()->setEcuName(dialog.ecuName().toStdString());
+            m_projectManager->currentProject()->setDescription(dialog.description().toStdString());
+            m_projectManager->currentProject()->setBinaryFilepath(dialog.binaryFilePath().toStdString());
             
             loadBinaryFile(dialog.binaryFilePath());
             
@@ -297,7 +316,7 @@ void MainWindow::newProject() {
             updateWindowTitle();
             m_saveProjectAction->setEnabled(true);
             m_addMapAction->setEnabled(true);
-            m_detectMapsAction->setEnabled(m_binaryFile.isLoaded());
+            m_detectMapsAction->setEnabled(m_binaryFile->isLoaded());
             
             // Clear maps
             m_mapList->clearMaps();
@@ -314,8 +333,8 @@ void MainWindow::openProject() {
     
     QString filepath = QFileDialog::getOpenFileName(this, "Open Project", "", "Project Files (*.wmm10)");
     if (!filepath.isEmpty()) {
-        if (m_projectManager.loadProject(filepath.toStdString())) {
-            Project* project = m_projectManager.currentProject();
+        if (m_projectManager->loadProject(filepath.toStdString())) {
+            Project* project = m_projectManager->currentProject();
             
             // Update cache
             CacheManager::instance().setCurrentProject(filepath.toStdString());
@@ -336,8 +355,8 @@ void MainWindow::openProject() {
             updateWindowTitle();
             m_saveProjectAction->setEnabled(true);
             m_addMapAction->setEnabled(true);
-            m_detectMapsAction->setEnabled(m_binaryFile.isLoaded());
-            m_compareMapsAction->setEnabled(m_projectManager.currentProject()->mapCount() >= 2);
+            m_detectMapsAction->setEnabled(m_binaryFile->isLoaded());
+            m_compareMapsAction->setEnabled(m_projectManager->currentProject()->mapCount() >= 2);
             m_batchOpsAction->setEnabled(true);
             m_mapMathAction->setEnabled(true);
             m_interpolateAction->setEnabled(true);
@@ -353,7 +372,7 @@ void MainWindow::openProject() {
 }
 
 void MainWindow::saveProject() {
-    if (m_projectManager.saveProject()) {
+    if (m_projectManager->saveProject()) {
         updateWindowTitle();
     } else {
         QMessageBox::critical(this, "Error", "Failed to save project.");
@@ -363,7 +382,7 @@ void MainWindow::saveProject() {
 void MainWindow::saveProjectAs() {
     QString filepath = QFileDialog::getSaveFileName(this, "Save Project As", "", "Project Files (*.wmm10)");
     if (!filepath.isEmpty()) {
-        if (m_projectManager.saveProjectAs(filepath.toStdString())) {
+        if (m_projectManager->saveProjectAs(filepath.toStdString())) {
             updateWindowTitle();
         } else {
             QMessageBox::critical(this, "Error", "Failed to save project.");
@@ -375,16 +394,16 @@ void MainWindow::loadBinary() {
     QString filepath = QFileDialog::getOpenFileName(this, "Load Binary File", "", "Binary Files (*.bin *.hex);;All Files (*.*)");
     if (!filepath.isEmpty()) {
         loadBinaryFile(filepath);
-        if (m_projectManager.hasCurrentProject()) {
-            m_projectManager.currentProject()->setBinaryFilepath(filepath.toStdString());
+        if (m_projectManager->hasCurrentProject()) {
+            m_projectManager->currentProject()->setBinaryFilepath(filepath.toStdString());
         }
     }
 }
 
 void MainWindow::loadBinaryFile(const QString& filepath) {
-    if (m_binaryFile.load(filepath.toStdString())) {
-        m_hexEditor->setBinaryFile(&m_binaryFile);
-        m_statusBar->setFileInfo(QFileInfo(filepath).fileName(), m_binaryFile.size());
+    if (m_binaryFile->load(filepath.toStdString())) {
+        m_hexEditor->setBinaryFile(m_binaryFile);
+        m_statusBar->setFileInfo(QFileInfo(filepath).fileName(), m_binaryFile->size());
         m_saveBinaryAction->setEnabled(true);
         m_detectMapsAction->setEnabled(true);
         
@@ -398,7 +417,36 @@ void MainWindow::loadBinaryFile(const QString& filepath) {
 }
 
 void MainWindow::saveBinary() {
-    if (m_binaryFile.save()) {
+    // Safe Mode: Validate checksum before export
+    if (SafeModeManager::instance().isEnabled()) {
+        if (!SafeModeManager::instance().validateChecksum(
+                m_binaryFile->data(), m_binaryFile->size(), "CRC32")) {
+            QMessageBox::critical(this, "Safe Mode: Export Blocked",
+                "Checksum validation failed. Export blocked to prevent unsafe ECU files.\n\n"
+                "Please verify the binary file integrity before exporting.");
+            SafeModeManager::instance().logBlock("Export blocked: Checksum validation failed");
+            return;
+        }
+        
+        // ECU signature verification
+        if (m_projectManager->hasCurrentProject()) {
+            Project* project = m_projectManager->currentProject();
+            std::string currentSignature = SafeModeManager::instance().computeEcuSignature(
+                project->ecuName(), "1.0", m_binaryFile->size());
+            std::string projectSignature = SafeModeManager::instance().computeEcuSignature(
+                project->ecuName(), "1.0", m_binaryFile->size());
+            
+            if (!SafeModeManager::instance().verifyEcuSignature(currentSignature, projectSignature)) {
+                QMessageBox::critical(this, "Safe Mode: Export Blocked",
+                    "ECU signature mismatch. Export blocked to prevent unsafe ECU files.\n\n"
+                    "The binary file does not match the project ECU configuration.");
+                SafeModeManager::instance().logBlock("Export blocked: ECU signature mismatch");
+                return;
+            }
+        }
+    }
+    
+    if (m_binaryFile->save()) {
         m_statusBar->setMessage("Binary file saved.");
     } else {
         QMessageBox::critical(this, "Error", "Failed to save binary file.");
@@ -408,7 +456,36 @@ void MainWindow::saveBinary() {
 void MainWindow::saveBinaryAs() {
     QString filepath = QFileDialog::getSaveFileName(this, "Save Binary File As", "", "Binary Files (*.bin);;All Files (*.*)");
     if (!filepath.isEmpty()) {
-        if (m_binaryFile.save(filepath.toStdString())) {
+        // Safe Mode: Validate checksum before export
+        if (SafeModeManager::instance().isEnabled()) {
+            if (!SafeModeManager::instance().validateChecksum(
+                    m_binaryFile->data(), m_binaryFile->size(), "CRC32")) {
+                QMessageBox::critical(this, "Safe Mode: Export Blocked",
+                    "Checksum validation failed. Export blocked to prevent unsafe ECU files.\n\n"
+                    "Please verify the binary file integrity before exporting.");
+                SafeModeManager::instance().logBlock("Export blocked: Checksum validation failed");
+                return;
+            }
+            
+            // ECU signature verification
+            if (m_projectManager->hasCurrentProject()) {
+                Project* project = m_projectManager->currentProject();
+                std::string currentSignature = SafeModeManager::instance().computeEcuSignature(
+                    project->ecuName(), "1.0", m_binaryFile->size());
+                std::string projectSignature = SafeModeManager::instance().computeEcuSignature(
+                    project->ecuName(), "1.0", m_binaryFile->size());
+                
+                if (!SafeModeManager::instance().verifyEcuSignature(currentSignature, projectSignature)) {
+                    QMessageBox::critical(this, "Safe Mode: Export Blocked",
+                        "ECU signature mismatch. Export blocked to prevent unsafe ECU files.\n\n"
+                        "The binary file does not match the project ECU configuration.");
+                    SafeModeManager::instance().logBlock("Export blocked: ECU signature mismatch");
+                    return;
+                }
+            }
+        }
+        
+        if (m_binaryFile->save(filepath.toStdString())) {
             m_statusBar->setMessage("Binary file saved.");
         } else {
             QMessageBox::critical(this, "Error", "Failed to save binary file.");
@@ -417,12 +494,12 @@ void MainWindow::saveBinaryAs() {
 }
 
 void MainWindow::detectMaps() {
-    if (!m_binaryFile.isLoaded()) {
+    if (!m_binaryFile->isLoaded()) {
         return;
     }
     
-    m_mapDetector.setBinaryData(m_binaryFile.data(), m_binaryFile.size());
-    auto candidates = m_mapDetector.detectMaps();
+    m_mapDetector->setBinaryData(m_binaryFile->data(), m_binaryFile->size());
+    auto candidates = m_mapDetector->detectMaps();
     
     if (candidates.empty()) {
         QMessageBox::information(this, "Map Detection", "No maps detected.");
@@ -454,10 +531,10 @@ void MainWindow::detectMaps() {
             map.setColumns(candidate.columns);
             map.setDataType(2); // uint16 default
             
-            if (m_projectManager.hasCurrentProject()) {
-                m_projectManager.currentProject()->addMap(map);
+            if (m_projectManager->hasCurrentProject()) {
+                m_projectManager->currentProject()->addMap(map);
                 m_mapList->addMap(map);
-                m_projectManager.markChanged();
+                m_projectManager->markChanged();
                 updateWindowTitle();
             }
         }
@@ -465,26 +542,26 @@ void MainWindow::detectMaps() {
 }
 
 void MainWindow::addMap() {
-    if (!m_projectManager.hasCurrentProject()) {
+    if (!m_projectManager->hasCurrentProject()) {
         return;
     }
     
     MapDefinition map = MapDefinitionDialog::getMapDefinition(this);
     if (!map.name().empty()) {
-        m_projectManager.currentProject()->addMap(map);
+        m_projectManager->currentProject()->addMap(map);
         m_mapList->addMap(map);
-        m_projectManager.markChanged();
+        m_projectManager->markChanged();
         updateWindowTitle();
     }
 }
 
 void MainWindow::editMap() {
     int index = m_mapList->currentMapIndex();
-    if (index < 0 || !m_projectManager.hasCurrentProject()) {
+    if (index < 0 || !m_projectManager->hasCurrentProject()) {
         return;
     }
     
-    Project* project = m_projectManager.currentProject();
+    Project* project = m_projectManager->currentProject();
     MapDefinition map = project->getMap(index);
     
     MapDefinitionDialog dialog(this);
@@ -499,42 +576,42 @@ void MainWindow::editMap() {
         }
         m_mapList->setCurrentRow(index);
         
-        m_projectManager.markChanged();
+        m_projectManager->markChanged();
         updateWindowTitle();
     }
 }
 
 void MainWindow::deleteMap() {
     int index = m_mapList->currentMapIndex();
-    if (index < 0 || !m_projectManager.hasCurrentProject()) {
+    if (index < 0 || !m_projectManager->hasCurrentProject()) {
         return;
     }
     
-    m_projectManager.currentProject()->removeMap(index);
+    m_projectManager->currentProject()->removeMap(index);
     m_mapList->clearMaps();
     
-    Project* project = m_projectManager.currentProject();
+    Project* project = m_projectManager->currentProject();
     for (size_t i = 0; i < project->mapCount(); ++i) {
         m_mapList->addMap(project->getMap(i));
     }
     
-    m_projectManager.markChanged();
+    m_projectManager->markChanged();
     updateWindowTitle();
 }
 
 void MainWindow::onMapSelected(int index) {
-    if (index < 0 || !m_projectManager.hasCurrentProject() || !m_binaryFile.isLoaded()) {
+    if (index < 0 || !m_projectManager->hasCurrentProject() || !m_binaryFile->isLoaded()) {
         return;
     }
     
-    Project* project = m_projectManager.currentProject();
+    Project* project = m_projectManager->currentProject();
     const MapDefinition& map = project->getMap(index);
     
     if (map.type() == MapType::Map2D) {
-        m_map2DViewer->setMap(map, &m_binaryFile);
+        m_map2DViewer->setMap(map, m_binaryFile);
         m_mapViewerTabs->setCurrentIndex(0);
     } else {
-        m_map3DViewer->setMap(map, &m_binaryFile);
+        m_map3DViewer->setMap(map, m_binaryFile);
         m_mapViewerTabs->setCurrentIndex(1);
     }
     
@@ -608,15 +685,15 @@ void MainWindow::mapMathOperations() {
 
 void MainWindow::interpolateMap() {
     int index = m_mapList->currentMapIndex();
-    if (index < 0 || !m_projectManager.hasCurrentProject() || !m_binaryFile.isLoaded()) {
+    if (index < 0 || !m_projectManager->hasCurrentProject() || !m_binaryFile->isLoaded()) {
         return;
     }
     
-    Project* project = m_projectManager.currentProject();
+    Project* project = m_projectManager->currentProject();
     MapDefinition& map = project->getMap(index);
     
     if (m_interpolationEngine->interpolateMap(map)) {
-        m_projectManager.markChanged();
+        m_projectManager->markChanged();
         updateWindowTitle();
         onMapSelected(index); // Refresh view
     }
@@ -624,15 +701,15 @@ void MainWindow::interpolateMap() {
 
 void MainWindow::smoothMap() {
     int index = m_mapList->currentMapIndex();
-    if (index < 0 || !m_projectManager.hasCurrentProject() || !m_binaryFile.isLoaded()) {
+    if (index < 0 || !m_projectManager->hasCurrentProject() || !m_binaryFile->isLoaded()) {
         return;
     }
     
-    Project* project = m_projectManager.currentProject();
+    Project* project = m_projectManager->currentProject();
     MapDefinition& map = project->getMap(index);
     
     if (m_interpolationEngine->smoothMap(map)) {
-        m_projectManager.markChanged();
+        m_projectManager->markChanged();
         updateWindowTitle();
         onMapSelected(index); // Refresh view
     }
@@ -642,20 +719,20 @@ void MainWindow::importKessFile() {
     QString filepath = QFileDialog::getOpenFileName(this, "Import KESS File", "", 
                                                     "KESS Files (*.kess *.ori *.mod);;All Files (*.*)");
     if (!filepath.isEmpty()) {
-        Project* project = m_projectManager.currentProject();
+        Project* project = m_projectManager->currentProject();
         if (!project) {
             // Create a new project for import
             newProject();
-            project = m_projectManager.currentProject();
+            project = m_projectManager->currentProject();
         }
         
-        if (project && m_kessConverter.importKessFile(filepath.toStdString(), *project)) {
+        if (project && m_kessConverter->importKessFile(filepath.toStdString(), *project)) {
             // Refresh map list
             m_mapList->clearMaps();
             for (size_t i = 0; i < project->mapCount(); ++i) {
                 m_mapList->addMap(project->getMap(i));
             }
-            m_projectManager.markChanged();
+            m_projectManager->markChanged();
             updateWindowTitle();
             QMessageBox::information(this, "Import", "KESS file imported successfully.");
         } else {
@@ -665,15 +742,15 @@ void MainWindow::importKessFile() {
 }
 
 void MainWindow::exportKessFile() {
-    if (!m_projectManager.hasCurrentProject()) {
+    if (!m_projectManager->hasCurrentProject()) {
         return;
     }
     
     QString filepath = QFileDialog::getSaveFileName(this, "Export to KESS File", "", 
                                                    "KESS Files (*.kess);;All Files (*.*)");
     if (!filepath.isEmpty()) {
-        Project* project = m_projectManager.currentProject();
-        if (m_kessConverter.exportToKessFile(*project, filepath.toStdString())) {
+        Project* project = m_projectManager->currentProject();
+        if (m_kessConverter->exportToKessFile(*project, filepath.toStdString())) {
             QMessageBox::information(this, "Export", "Project exported to KESS file successfully.");
         } else {
             QMessageBox::critical(this, "Error", "Failed to export to KESS file.");
@@ -690,7 +767,7 @@ void MainWindow::about() {
 }
 
 bool MainWindow::maybeSave() {
-    if (m_projectManager.hasUnsavedChanges()) {
+    if (m_projectManager->hasUnsavedChanges()) {
         int ret = QMessageBox::warning(this, "Unsaved Changes",
                                       "The project has been modified.\n"
                                       "Do you want to save your changes?",
@@ -723,6 +800,58 @@ void MainWindow::updateRecentFilesMenus() {
     m_recentBinariesMenu->updateRecentFiles(binaryPaths);
 }
 
+void MainWindow::toggleSafeMode() {
+    bool currentState = SafeModeManager::instance().isEnabled();
+    bool newState = !currentState;
+    
+    if (!newState) {
+        // User wants to disable Safe Mode - show warning
+        int ret = QMessageBox::warning(this, "Disable Safe Mode",
+            "Disabling Safe Mode allows unsafe ECU file operations.\n\n"
+            "Proceed only if you know what you are doing.\n\n"
+            "This may result in:\n"
+            "- Invalid map values\n"
+            "- Corrupted checksums\n"
+            "- ECU signature mismatches\n"
+            "- Potential ECU damage",
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+        
+        if (ret == QMessageBox::No) {
+            // User cancelled - restore menu state
+            QAction* action = qobject_cast<QAction*>(sender());
+            if (action) {
+                action->setChecked(true);
+            }
+            return;
+        }
+    }
+    
+    // Update Safe Mode state
+    SafeModeManager::instance().setEnabled(newState);
+    Settings::instance().setSafeModeEnabled(newState);
+    Settings::instance().save();
+    
+    // Update UI
+    updateSafeModeStatus();
+    
+    // Enable/disable hex editor based on Safe Mode
+    if (m_hexEditor && m_hexEditor->hexEditor()) {
+        m_hexEditor->hexEditor()->setReadOnly(newState);
+    }
+    
+    // Update menu action state
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (action) {
+        action->setChecked(newState);
+    }
+}
+
+void MainWindow::updateSafeModeStatus() {
+    bool enabled = SafeModeManager::instance().isEnabled();
+    m_statusBar->setSafeModeStatus(enabled);
+}
+
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (maybeSave()) {
         Settings::instance().save();
@@ -747,6 +876,7 @@ MainWindow::~MainWindow() {
     delete m_bookmarkManager;
     delete m_annotationManager;
     delete m_hexSearch;
+    delete m_mapComparator;
     delete m_batchOps;
     delete m_mapMath;
     delete m_interpolationEngine;

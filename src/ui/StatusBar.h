@@ -17,6 +17,7 @@ public:
     void setMessage(const QString& message);
     void setSelectionInfo(size_t startAddress, size_t endAddress, size_t size);
     void setChecksumStatus(const QString& status);
+    void setSafeModeStatus(bool enabled);
     void clearSelectionInfo();
     void clearChecksumStatus();
 
@@ -28,6 +29,7 @@ private:
     QLabel* m_selectionLabel{nullptr};
     QLabel* m_checksumLabel{nullptr};
     QLabel* m_messageLabel{nullptr};
+    QLabel* m_safeModeLabel{nullptr};
 };
 
 } // namespace WinMMM10

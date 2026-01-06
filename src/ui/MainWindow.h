@@ -65,6 +65,7 @@ private slots:
     void importMapDefinitions();
     void showCacheSettings();
     void showSearchReplace();
+    void toggleSafeMode();
     void addBookmark();
     void addAnnotation();
     void compareMaps();
@@ -85,6 +86,7 @@ private:
     bool maybeSave();
     void loadBinaryFile(const QString& filepath);
     void updateRecentFilesMenus();
+    void updateSafeModeStatus();
 
     // ==== VALUE TYPE MEMBERS MOVED TO POINTERS (SAFE) ====
     ProjectManager* m_projectManager{nullptr};
