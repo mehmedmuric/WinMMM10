@@ -55,8 +55,23 @@ MainWindow::MainWindow(QWidget* parent)
     qDebug() << "MainWindow: Docks setup complete";
 
     updateWindowTitle();
-    setMinimumSize(1024, 768);
-    resize(1280, 800);
+    
+    // Better window sizing and constraints
+    setMinimumSize(1200, 800);
+    resize(1600, 1000);
+    
+    // Restore window geometry from settings if available
+    QByteArray geometry = Settings::instance().windowGeometry();
+    if (!geometry.isEmpty()) {
+        restoreGeometry(geometry);
+    }
+    
+    // Restore window state (dock positions, etc.)
+    QByteArray state = Settings::instance().windowState();
+    if (!state.isEmpty()) {
+        restoreState(state);
+    }
+    
     qDebug() << "MainWindow: Window properties set";
 
     // Load Settings and Cache after UI is fully set up using QTimer
@@ -219,16 +234,33 @@ void MainWindow::setupMenus() {
 }
 
 void MainWindow::setupToolbars() {
+    // Main toolbar - organized by function
     QToolBar* mainToolbar = addToolBar("Main");
+    mainToolbar->setObjectName("MainToolBar");
+    mainToolbar->setMovable(true);
+    mainToolbar->setFloatable(true);
+    mainToolbar->setIconSize(QSize(20, 20));
+    
+    // Project operations
     mainToolbar->addAction(m_newProjectAction);
     mainToolbar->addAction(m_openProjectAction);
     mainToolbar->addAction(m_saveProjectAction);
     mainToolbar->addSeparator();
+    
+    // Binary file operations
     mainToolbar->addAction(m_loadBinaryAction);
     mainToolbar->addAction(m_saveBinaryAction);
     mainToolbar->addSeparator();
+    
+    // Map operations
     mainToolbar->addAction(m_detectMapsAction);
     mainToolbar->addAction(m_addMapAction);
+    mainToolbar->addAction(m_editMapAction);
+    mainToolbar->addSeparator();
+    
+    // Map tools
+    mainToolbar->addAction(m_compareMapsAction);
+    mainToolbar->addAction(m_interpolateAction);
 }
 
 void MainWindow::setupDocks() {
@@ -246,7 +278,9 @@ void MainWindow::setupDocks() {
     QDockWidget* mapsDock = new QDockWidget("Maps", this);
     mapsDock->setObjectName("MapsDock");
     mapsDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    m_mapList = new MapListWidget(this);  // Changed: parent to 'this' instead of mapsDock
+    mapsDock->setMinimumWidth(250);
+    mapsDock->setMinimumHeight(200);
+    m_mapList = new MapListWidget(this);
     connect(m_mapList, &MapListWidget::mapSelected, this, &MainWindow::onMapSelected);
     connect(m_mapList, &MapListWidget::mapDoubleClicked, this, &MainWindow::onMapDoubleClicked);
     connect(m_mapList, &MapListWidget::mapDeleteRequested, this, [this](int) { deleteMap(); });
@@ -259,7 +293,11 @@ void MainWindow::setupDocks() {
     QDockWidget* viewerDock = new QDockWidget("Map Viewer", this);
     viewerDock->setObjectName("MapViewerDock");
     viewerDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-    m_mapViewerTabs = new QTabWidget(this);  // Changed: parent to 'this' instead of viewerDock
+    viewerDock->setMinimumWidth(400);
+    viewerDock->setMinimumHeight(300);
+    m_mapViewerTabs = new QTabWidget(this);
+    m_mapViewerTabs->setTabPosition(QTabWidget::North);
+    m_mapViewerTabs->setMovable(false);
     m_map2DViewer = new Map2DViewer(m_mapViewerTabs);
     m_map3DViewer = new Map3DViewer(m_mapViewerTabs);
     m_mapViewerTabs->addTab(m_map2DViewer, "2D View");
@@ -272,6 +310,8 @@ void MainWindow::setupDocks() {
     qDebug() << "MainWindow::setupDocks(): Creating Bookmarks dock...";
     m_bookmarksPanel = new BookmarksPanel(this);
     m_bookmarksPanel->setObjectName("BookmarksDock");
+    m_bookmarksPanel->setMinimumWidth(280);
+    m_bookmarksPanel->setMinimumHeight(200);
     // DON'T call setBookmarkManager here - defer it to avoid stack overflow during construction
     connect(m_bookmarksPanel, &BookmarksPanel::bookmarkDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
@@ -281,10 +321,12 @@ void MainWindow::setupDocks() {
     addDockWidget(Qt::LeftDockWidgetArea, m_bookmarksPanel);
     qDebug() << "MainWindow::setupDocks(): Bookmarks dock created and added";
     
-    // Annotations dock
+    // Annotations dock - tabify with Bookmarks for better organization
     qDebug() << "MainWindow::setupDocks(): Creating Annotations dock...";
     m_annotationsPanel = new AnnotationsPanel(this);
     m_annotationsPanel->setObjectName("AnnotationsDock");
+    m_annotationsPanel->setMinimumWidth(280);
+    m_annotationsPanel->setMinimumHeight(200);
     // DON'T call setAnnotationManager here - defer it to avoid stack overflow during construction
     connect(m_annotationsPanel, &AnnotationsPanel::annotationDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
@@ -292,7 +334,9 @@ void MainWindow::setupDocks() {
         }
     });
     addDockWidget(Qt::LeftDockWidgetArea, m_annotationsPanel);
-    qDebug() << "MainWindow::setupDocks(): Annotations dock created and added";
+    tabifyDockWidget(m_bookmarksPanel, m_annotationsPanel); // Tabify for better space usage
+    m_bookmarksPanel->raise(); // Show Bookmarks tab first
+    qDebug() << "MainWindow::setupDocks(): Annotations dock created and tabified with Bookmarks";
     
     // Mark as initialized after all docks are successfully created
     docksInitialized = true;
@@ -827,7 +871,11 @@ void MainWindow::updateSafeModeStatus() {
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (maybeSave()) {
+        // Save window geometry and state for next session
+        Settings::instance().setWindowGeometry(saveGeometry());
+        Settings::instance().setWindowState(saveState());
         Settings::instance().save();
+        
         CacheManager::instance().applicationCache().save();
         
         // Auto-cleanup if enabled

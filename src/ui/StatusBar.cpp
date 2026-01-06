@@ -7,22 +7,45 @@ namespace WinMMM10 {
 StatusBar::StatusBar(QWidget* parent)
     : QStatusBar(parent)
 {
+    // Set minimum height for better visibility
+    setMinimumHeight(24);
+    
+    // Address label (left side, expandable)
     m_addressLabel = new QLabel("Address: 0x00000000");
-    m_fileLabel = new QLabel("No file loaded");
-    m_selectionLabel = new QLabel("");
-    m_checksumLabel = new QLabel("");
-    m_messageLabel = new QLabel("Ready");
-    m_safeModeLabel = new QLabel("");
-    
-    m_selectionLabel->setVisible(false);
-    m_checksumLabel->setVisible(false);
-    m_safeModeLabel->setStyleSheet("color: green; font-weight: bold;");
-    
+    m_addressLabel->setMinimumWidth(150);
     addWidget(m_addressLabel);
+    
+    // Add stretch to push permanent widgets to the right
+    addPermanentWidget(new QLabel("")); // Spacer
+    
+    // Selection info (right side, permanent)
+    m_selectionLabel = new QLabel("");
+    m_selectionLabel->setVisible(false);
+    m_selectionLabel->setMinimumWidth(200);
     addPermanentWidget(m_selectionLabel);
+    
+    // Checksum status (right side, permanent)
+    m_checksumLabel = new QLabel("");
+    m_checksumLabel->setVisible(false);
+    m_checksumLabel->setMinimumWidth(150);
     addPermanentWidget(m_checksumLabel);
+    
+    // Safe Mode indicator (right side, permanent)
+    m_safeModeLabel = new QLabel("");
+    m_safeModeLabel->setStyleSheet("color: green; font-weight: bold; padding: 0 8px;");
+    m_safeModeLabel->setMinimumWidth(120);
     addPermanentWidget(m_safeModeLabel);
+    
+    // File info (right side, permanent)
+    m_fileLabel = new QLabel("No file loaded");
+    m_fileLabel->setMinimumWidth(200);
+    m_fileLabel->setTextFormat(Qt::PlainText);
+    m_fileLabel->setTextInteractionFlags(Qt::NoTextInteraction);
     addPermanentWidget(m_fileLabel);
+    
+    // Status message (right side, permanent)
+    m_messageLabel = new QLabel("Ready");
+    m_messageLabel->setMinimumWidth(150);
     addPermanentWidget(m_messageLabel);
 }
 

@@ -9,33 +9,43 @@ HexEditorWidget::HexEditorWidget(QWidget* parent)
     : QWidget(parent)
 {
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setSpacing(4);
     
-    // Toolbar
+    // Toolbar with better spacing
     auto* toolbar = new QHBoxLayout();
-    toolbar->addWidget(new QLabel("Address:"));
+    toolbar->setSpacing(6);
+    toolbar->setContentsMargins(0, 0, 0, 0);
+    
+    QLabel* addressLabel = new QLabel("Address:");
+    addressLabel->setMinimumWidth(60);
+    toolbar->addWidget(addressLabel);
     
     m_addressEdit = new QLineEdit();
     m_addressEdit->setPlaceholderText("0x00000000");
-    m_addressEdit->setMaximumWidth(150);
+    m_addressEdit->setMinimumWidth(120);
+    m_addressEdit->setMaximumWidth(180);
     connect(m_addressEdit, &QLineEdit::returnPressed, this, &HexEditorWidget::onGoToClicked);
     toolbar->addWidget(m_addressEdit);
     
     auto* goButton = new QPushButton("Go To");
+    goButton->setMinimumWidth(60);
     connect(goButton, &QPushButton::clicked, this, &HexEditorWidget::onGoToClicked);
     toolbar->addWidget(goButton);
     
     toolbar->addStretch();
     
     m_statusLabel = new QLabel("Ready");
+    m_statusLabel->setMinimumWidth(100);
     toolbar->addWidget(m_statusLabel);
     
     layout->addLayout(toolbar);
     
-    // Hex editor
+    // Hex editor - takes remaining space
     m_hexEditor = new HexEditor(this);
+    m_hexEditor->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     connect(m_hexEditor, &HexEditor::addressChanged, this, &HexEditorWidget::onAddressChanged);
-    layout->addWidget(m_hexEditor);
+    layout->addWidget(m_hexEditor, 1); // Stretch factor 1 for responsive sizing
     
     setLayout(layout);
 }

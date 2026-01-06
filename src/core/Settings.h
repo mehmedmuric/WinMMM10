@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <QByteArray>
 
 namespace WinMMM10 {
 
@@ -20,6 +21,12 @@ public:
     bool safeModeEnabled() const { return m_safeModeEnabled; }
     void setSafeModeEnabled(bool enabled) { m_safeModeEnabled = enabled; }
     
+    QByteArray windowGeometry() const { return m_windowGeometry; }
+    void setWindowGeometry(const QByteArray& geometry) { m_windowGeometry = geometry; }
+    
+    QByteArray windowState() const { return m_windowState; }
+    void setWindowState(const QByteArray& state) { m_windowState = state; }
+    
     void load();
     void save();
 
@@ -33,6 +40,8 @@ private:
     std::string m_lastBinaryPath;
     bool m_autoCleanupCache{false};
     bool m_safeModeEnabled{true}; // Default: enabled
+    QByteArray m_windowGeometry;
+    QByteArray m_windowState;
 };
 
 } // namespace WinMMM10

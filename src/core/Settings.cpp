@@ -26,6 +26,8 @@ void Settings::load() {
         m_lastBinaryPath = settings.value("lastBinaryPath", "").toString().toStdString();
         m_autoCleanupCache = settings.value("autoCleanupCache", false).toBool();
         m_safeModeEnabled = settings.value("safeModeEnabled", true).toBool(); // Default: enabled
+        m_windowGeometry = settings.value("windowGeometry", QByteArray()).toByteArray();
+        m_windowState = settings.value("windowState", QByteArray()).toByteArray();
     }
     catch (const std::exception& e) {
         qWarning() << "Settings: Exception during load:" << e.what();
@@ -51,6 +53,8 @@ void Settings::save() {
         settings.setValue("lastBinaryPath", QString::fromStdString(m_lastBinaryPath));
         settings.setValue("autoCleanupCache", m_autoCleanupCache);
         settings.setValue("safeModeEnabled", m_safeModeEnabled);
+        settings.setValue("windowGeometry", m_windowGeometry);
+        settings.setValue("windowState", m_windowState);
         settings.sync();
     }
     catch (const std::exception& e) {
