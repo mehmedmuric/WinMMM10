@@ -198,29 +198,46 @@ void MainWindow::setupToolbars() {
 }
 
 void MainWindow::setupDocks() {
+    // Re-entrancy guard: ensure setupDocks() runs exactly once
+    static bool docksInitialized = false;
+    if (docksInitialized) {
+        qWarning() << "MainWindow::setupDocks(): Attempted re-entry detected! Ignoring duplicate call.";
+        return;
+    }
+    
+    qDebug() << "MainWindow::setupDocks(): Starting dock initialization";
+    
     // Maps dock
+    qDebug() << "MainWindow::setupDocks(): Creating Maps dock...";
     QDockWidget* mapsDock = new QDockWidget("Maps", this);
+    mapsDock->setObjectName("MapsDock");
     mapsDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    m_mapList = new MapListWidget(mapsDock);
+    m_mapList = new MapListWidget(this);  // Changed: parent to 'this' instead of mapsDock
     connect(m_mapList, &MapListWidget::mapSelected, this, &MainWindow::onMapSelected);
     connect(m_mapList, &MapListWidget::mapDoubleClicked, this, &MainWindow::onMapDoubleClicked);
     connect(m_mapList, &MapListWidget::mapDeleteRequested, this, [this](int) { deleteMap(); });
     mapsDock->setWidget(m_mapList);
     addDockWidget(Qt::RightDockWidgetArea, mapsDock);
+    qDebug() << "MainWindow::setupDocks(): Maps dock created and added";
     
     // Map viewer dock
+    qDebug() << "MainWindow::setupDocks(): Creating Map Viewer dock...";
     QDockWidget* viewerDock = new QDockWidget("Map Viewer", this);
+    viewerDock->setObjectName("MapViewerDock");
     viewerDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-    m_mapViewerTabs = new QTabWidget(viewerDock);
+    m_mapViewerTabs = new QTabWidget(this);  // Changed: parent to 'this' instead of viewerDock
     m_map2DViewer = new Map2DViewer(m_mapViewerTabs);
     m_map3DViewer = new Map3DViewer(m_mapViewerTabs);
     m_mapViewerTabs->addTab(m_map2DViewer, "2D View");
     m_mapViewerTabs->addTab(m_map3DViewer, "3D View");
     viewerDock->setWidget(m_mapViewerTabs);
     addDockWidget(Qt::BottomDockWidgetArea, viewerDock);
+    qDebug() << "MainWindow::setupDocks(): Map Viewer dock created and added";
     
     // Bookmarks dock
+    qDebug() << "MainWindow::setupDocks(): Creating Bookmarks dock...";
     m_bookmarksPanel = new BookmarksPanel(this);
+    m_bookmarksPanel->setObjectName("BookmarksDock");
     m_bookmarksPanel->setBookmarkManager(&m_bookmarkManager);
     connect(m_bookmarksPanel, &BookmarksPanel::bookmarkDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
@@ -228,9 +245,12 @@ void MainWindow::setupDocks() {
         }
     });
     addDockWidget(Qt::LeftDockWidgetArea, m_bookmarksPanel);
+    qDebug() << "MainWindow::setupDocks(): Bookmarks dock created and added";
     
     // Annotations dock
+    qDebug() << "MainWindow::setupDocks(): Creating Annotations dock...";
     m_annotationsPanel = new AnnotationsPanel(this);
+    m_annotationsPanel->setObjectName("AnnotationsDock");
     m_annotationsPanel->setAnnotationManager(&m_annotationManager);
     connect(m_annotationsPanel, &AnnotationsPanel::annotationDoubleClicked, this, [this](size_t address) {
         if (m_hexEditor && m_hexEditor->hexEditor()) {
@@ -238,6 +258,11 @@ void MainWindow::setupDocks() {
         }
     });
     addDockWidget(Qt::LeftDockWidgetArea, m_annotationsPanel);
+    qDebug() << "MainWindow::setupDocks(): Annotations dock created and added";
+    
+    // Mark as initialized after all docks are successfully created
+    docksInitialized = true;
+    qDebug() << "MainWindow::setupDocks(): Dock initialization complete";
 }
 
 void MainWindow::updateWindowTitle() {
