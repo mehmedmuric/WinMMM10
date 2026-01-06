@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include "../core/ProjectManager.h"
 #include "../core/Settings.h"
+#include "../core/SafeModeManager.h"
 #include "../binary/BinaryFile.h"
 #include "HexEditorWidget.h"
 #include "MapListWidget.h"

@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "CacheSettingsDialog.h"
 #include "../cache/CacheManager.h"
+#include "../core/SafeModeManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QCloseEvent>
