@@ -123,12 +123,21 @@ void BookmarksPanel::populateBookmarks() {
     m_bookmarkTree->resizeColumnToContents(0);
     m_bookmarkTree->resizeColumnToContents(1);
     
-    // Update category filter
+    // Update category filter - BLOCK SIGNALS to prevent recursion
+    m_categoryFilter->blockSignals(true);
     m_categoryFilter->clear();
     m_categoryFilter->addItem("All", "");
     for (const auto& cat : m_bookmarkManager->getCategories()) {
         m_categoryFilter->addItem(QString::fromStdString(cat), QString::fromStdString(cat));
     }
+    // Restore previous selection if it still exists
+    int index = m_categoryFilter->findData(filterCategory);
+    if (index >= 0) {
+        m_categoryFilter->setCurrentIndex(index);
+    } else {
+        m_categoryFilter->setCurrentIndex(0); // "All"
+    }
+    m_categoryFilter->blockSignals(false);
 }
 
 void BookmarksPanel::onAddBookmark() {
