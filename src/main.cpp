@@ -76,24 +76,9 @@ namespace {
     
     void setupConsole() {
 #ifdef _WIN32
-        // Allocate console for GUI application
-        if (AllocConsole()) {
-            // Redirect stdout and stderr to console
-            FILE* pCout;
-            FILE* pCerr;
-            FILE* pCin;
-            
-            freopen_s(&pCout, "CONOUT$", "w", stdout);
-            freopen_s(&pCerr, "CONOUT$", "w", stderr);
-            freopen_s(&pCin, "CONIN$", "r", stdin);
-            
-            // Set console title
-            SetConsoleTitle(L"WinMMM10 Editor - Debug Console");
-            
-            std::cout.clear();
-            std::cerr.clear();
-            std::cin.clear();
-        }
+        // Debug console disabled for release builds
+        // Console allocation removed - application runs without console window
+        // Logging is still available via log file (WinMMM10Editor.log)
 #endif
     }
     
