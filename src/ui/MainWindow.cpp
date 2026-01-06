@@ -19,49 +19,47 @@ namespace WinMMM10 {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
-    // Add immediate debug output - this is the first line that executes in constructor body
-    // If we don't see this, the crash is in member initialization or QMainWindow constructor
     qDebug() << "MainWindow: Constructor body entered - QMainWindow base class constructed";
     qDebug() << "MainWindow: All member variables should be initialized by now";
-    
-    // Defer both Settings and Cache loading until after UI is set up and Qt is fully initialized
-    // This prevents stack overflow from QStandardPaths during early initialization
-    qDebug() << "MainWindow: Settings and cache loading deferred until after UI setup";
-    
-    qDebug() << "MainWindow: Initializing editing engines...";
-    // Initialize editing engines
-    m_hexSearch = new HexSearch(&m_binaryFile);
-    qDebug() << "MainWindow: HexSearch created";
-    m_batchOps = new BatchOperations(&m_binaryFile);
-    qDebug() << "MainWindow: BatchOperations created";
-    m_mapMath = new MapMath(&m_binaryFile);
-    qDebug() << "MainWindow: MapMath created";
-    m_interpolationEngine = new InterpolationEngine(&m_binaryFile);
-    qDebug() << "MainWindow: InterpolationEngine created";
-    qDebug() << "MainWindow: Editing engines initialized";
-    
+
+    // ==== SAFE HEAP ALLOCATION FOR VALUE MEMBERS ====
+    m_projectManager = new ProjectManager(this);
+    m_binaryFile = new BinaryFile();
+    m_mapDetector = new MapDetector(this);
+    m_bookmarkManager = new BookmarkManager();
+    m_annotationManager = new AnnotationManager();
+    m_hexSearch = new HexSearch(m_binaryFile);
+    m_mapComparator = new MapComparator();
+    m_batchOps = new BatchOperations(m_binaryFile);
+    m_mapMath = new MapMath(m_binaryFile);
+    m_interpolationEngine = new InterpolationEngine(m_binaryFile);
+    m_kessConverter = new KessMapConverter();
+
+    qDebug() << "MainWindow: Editing engines and core objects allocated";
+
+    // UI setup
     qDebug() << "MainWindow: Setting up UI...";
     setupUI();
     qDebug() << "MainWindow: UI setup complete";
-    
+
     qDebug() << "MainWindow: Setting up menus...";
     setupMenus();
     qDebug() << "MainWindow: Menus setup complete";
-    
+
     qDebug() << "MainWindow: Setting up toolbars...";
     setupToolbars();
     qDebug() << "MainWindow: Toolbars setup complete";
-    
+
     qDebug() << "MainWindow: Setting up docks...";
     setupDocks();
     qDebug() << "MainWindow: Docks setup complete";
-    
+
     updateWindowTitle();
     setMinimumSize(1024, 768);
     resize(1280, 800);
     qDebug() << "MainWindow: Window properties set";
-    
-    // Load Settings and Cache after UI is fully set up using QTimer to defer until event loop starts
+
+    // Load Settings and Cache after UI is fully set up using QTimer
     QTimer::singleShot(0, this, [this]() {
         qDebug() << "MainWindow: Loading settings (deferred)...";
         try {
@@ -71,7 +69,7 @@ MainWindow::MainWindow(QWidget* parent)
         catch (const std::exception& e) {
             qWarning() << "MainWindow: Failed to load settings:" << e.what();
         }
-        
+
         qDebug() << "MainWindow: Loading cache (deferred)...";
         try {
             CacheManager::instance().applicationCache().load();
@@ -81,7 +79,7 @@ MainWindow::MainWindow(QWidget* parent)
             qWarning() << "MainWindow: Failed to load cache:" << e.what();
         }
     });
-    
+
     qDebug() << "MainWindow: Constructor complete";
 }
 
@@ -741,7 +739,19 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     }
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    // Delete heap members
+    delete m_projectManager;
+    delete m_binaryFile;
+    delete m_mapDetector;
+    delete m_bookmarkManager;
+    delete m_annotationManager;
+    delete m_hexSearch;
+    delete m_batchOps;
+    delete m_mapMath;
+    delete m_interpolationEngine;
+    delete m_kessConverter;
+}
 
 } // namespace WinMMM10
 

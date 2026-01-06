@@ -85,20 +85,21 @@ private:
     bool maybeSave();
     void loadBinaryFile(const QString& filepath);
     void updateRecentFilesMenus();
-    
-    ProjectManager m_projectManager;
-    BinaryFile m_binaryFile;
-    MapDetector m_mapDetector;
-    BookmarkManager m_bookmarkManager;
-    AnnotationManager m_annotationManager;
+
+    // ==== VALUE TYPE MEMBERS MOVED TO POINTERS (SAFE) ====
+    ProjectManager* m_projectManager{nullptr};
+    BinaryFile* m_binaryFile{nullptr};
+    MapDetector* m_mapDetector{nullptr};
+    BookmarkManager* m_bookmarkManager{nullptr};
+    AnnotationManager* m_annotationManager{nullptr};
     HexSearch* m_hexSearch{nullptr};
-    MapComparator m_mapComparator;
+    MapComparator* m_mapComparator{nullptr};
     BatchOperations* m_batchOps{nullptr};
     MapMath* m_mapMath{nullptr};
     InterpolationEngine* m_interpolationEngine{nullptr};
-    KessMapConverter m_kessConverter;
-    
-    // UI Components
+    KessMapConverter* m_kessConverter{nullptr};
+
+    // ==== UI COMPONENTS (pointers, unchanged) ====
     HexEditorWidget* m_hexEditor{nullptr};
     MapListWidget* m_mapList{nullptr};
     QTabWidget* m_mapViewerTabs{nullptr};
@@ -110,8 +111,8 @@ private:
     RecentFilesMenu* m_recentProjectsMenu{nullptr};
     RecentFilesMenu* m_recentBinariesMenu{nullptr};
     SearchReplaceDialog* m_searchReplaceDialog{nullptr};
-    
-    // Actions
+
+    // ==== ACTIONS (pointers, unchanged) ====
     QAction* m_newProjectAction{nullptr};
     QAction* m_openProjectAction{nullptr};
     QAction* m_saveProjectAction{nullptr};
@@ -135,4 +136,3 @@ private:
 };
 
 } // namespace WinMMM10
-
