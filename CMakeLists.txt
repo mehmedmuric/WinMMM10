@@ -386,7 +386,7 @@ if(WIN32)
     
     # Increase stack size to 4MB to prevent stack overflow during initialization
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        LINK_FLAGS "/STACK:4194304"
+        LINK_FLAGS "/STACK:8388608"
     )
 endif()
 

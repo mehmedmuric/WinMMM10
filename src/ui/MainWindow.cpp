@@ -19,8 +19,10 @@ namespace WinMMM10 {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
-    qDebug() << "MainWindow: Constructor started";
-    qDebug() << "MainWindow: Member variables initialized";
+    // Add immediate debug output - this is the first line that executes in constructor body
+    // If we don't see this, the crash is in member initialization or QMainWindow constructor
+    qDebug() << "MainWindow: Constructor body entered - QMainWindow base class constructed";
+    qDebug() << "MainWindow: All member variables should be initialized by now";
     
     // Defer both Settings and Cache loading until after UI is set up and Qt is fully initialized
     // This prevents stack overflow from QStandardPaths during early initialization

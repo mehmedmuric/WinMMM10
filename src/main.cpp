@@ -152,15 +152,32 @@ int main(int argc, char* argv[]) {
         logToBoth("Theme applied");
         
         logToBoth("Creating MainWindow...");
-        WinMMM10::MainWindow window;
-        logToBoth("MainWindow created successfully");
+        logToFile("About to create MainWindow object...");
+        WinMMM10::MainWindow* window = nullptr;
+        try {
+            logToFile("Allocating MainWindow on heap...");
+            window = new WinMMM10::MainWindow();
+            logToBoth("MainWindow created successfully");
+        } catch (const std::exception& e) {
+            std::string errorMsg = "Exception creating MainWindow: " + std::string(e.what());
+            logToBoth(errorMsg);
+            QMessageBox::critical(nullptr, "Fatal Error", QString("Failed to create MainWindow:\n%1").arg(e.what()));
+            if (g_logFile.is_open()) g_logFile.close();
+            return 1;
+        } catch (...) {
+            logToBoth("Unknown exception creating MainWindow");
+            QMessageBox::critical(nullptr, "Fatal Error", "Failed to create MainWindow: Unknown exception");
+            if (g_logFile.is_open()) g_logFile.close();
+            return 1;
+        }
         
         logToBoth("Showing window...");
-        window.show();
+        window->show();
         logToBoth("Window shown, entering event loop");
         
-        int result = app.exec();
-        logToBoth("Application event loop exited with code: " + std::to_string(result));
+            int result = app.exec();
+            logToBoth("Application event loop exited with code: " + std::to_string(result));
+            delete window;
         
         if (g_logFile.is_open()) {
             logToFile("=== WinMMM10 Editor Session Ended ===");
