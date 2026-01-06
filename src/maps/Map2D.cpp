@@ -2,8 +2,6 @@
 #include "ScalingEngine.h"
 #include "binary/Endianness.h"
 #include "../core/SafeModeManager.h"
-#include <QMessageBox>
-#include <QDebug>
 #include <cstring>
 #include <algorithm>
 

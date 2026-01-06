@@ -1,9 +1,9 @@
 #include "SafeModeManager.h"
 #include "../binary/Checksum.h"
-#include <QDebug>
 #include <sstream>
 #include <iomanip>
 #include <functional>
+#include <iostream>
 
 namespace WinMMM10 {
 
@@ -15,7 +15,8 @@ SafeModeManager& SafeModeManager::instance() {
 void SafeModeManager::setEnabled(bool enabled) {
     if (m_enabled != enabled) {
         m_enabled = enabled;
-        qDebug() << "[SAFE MODE]" << (enabled ? "ENABLED" : "DISABLED");
+        // Log to standard output (UI layer will handle Qt logging)
+        std::cout << "[SAFE MODE] " << (enabled ? "ENABLED" : "DISABLED") << std::endl;
     }
 }
 
@@ -75,7 +76,10 @@ bool SafeModeManager::validateChecksum(
     // In a real implementation, you'd compare against stored checksum
     uint32_t calculated = ChecksumManager::instance().calculateChecksum(type, data, size);
     
-    qDebug() << "[SAFE MODE] Checksum calculated:" << QString::number(calculated, 16).toUpper();
+    // Log to standard output (UI layer will handle Qt logging)
+    std::ostringstream oss;
+    oss << "[SAFE MODE] Checksum calculated: 0x" << std::hex << std::uppercase << calculated;
+    std::cout << oss.str() << std::endl;
     
     // TODO: Compare with stored checksum if available
     // For now, we'll allow it but log
@@ -115,11 +119,11 @@ bool SafeModeManager::verifyEcuSignature(
 }
 
 void SafeModeManager::logBlock(const std::string& reason) const {
-    qWarning() << "[SAFE MODE BLOCK]" << QString::fromStdString(reason);
+    std::cerr << "[SAFE MODE BLOCK] " << reason << std::endl;
 }
 
 void SafeModeManager::logWarning(const std::string& message) const {
-    qWarning() << "[SAFE MODE WARNING]" << QString::fromStdString(message);
+    std::cerr << "[SAFE MODE WARNING] " << message << std::endl;
 }
 
 } // namespace WinMMM10
