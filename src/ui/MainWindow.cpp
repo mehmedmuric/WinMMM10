@@ -8,9 +8,11 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QTimer>
 #include <QDebug>
 #include <sstream>
 #include <iomanip>
+#include <exception>
 
 namespace WinMMM10 {
 
@@ -21,9 +23,9 @@ MainWindow::MainWindow(QWidget* parent)
     Settings::instance().load();
     qDebug() << "MainWindow: Settings loaded";
     
-    qDebug() << "MainWindow: Loading cache...";
-    CacheManager::instance().applicationCache().load();
-    qDebug() << "MainWindow: Cache loaded";
+    // Defer cache loading until after UI is set up and Qt is fully initialized
+    // This prevents stack overflow from QStandardPaths during early initialization
+    qDebug() << "MainWindow: Cache loading deferred until after UI setup";
     
     qDebug() << "MainWindow: Initializing editing engines...";
     // Initialize editing engines
@@ -52,6 +54,19 @@ MainWindow::MainWindow(QWidget* parent)
     updateWindowTitle();
     setMinimumSize(1024, 768);
     resize(1280, 800);
+    
+    // Load cache after UI is fully set up using QTimer to defer until event loop starts
+    QTimer::singleShot(0, this, [this]() {
+        qDebug() << "MainWindow: Loading cache (deferred)...";
+        try {
+            CacheManager::instance().applicationCache().load();
+            qDebug() << "MainWindow: Cache loaded successfully";
+        }
+        catch (const std::exception& e) {
+            qWarning() << "MainWindow: Failed to load cache:" << e.what();
+        }
+    });
+    
     qDebug() << "MainWindow: Constructor complete";
 }
 

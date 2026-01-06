@@ -5,9 +5,12 @@
 #include <QDateTime>
 #include <QSettings>
 #include <QFile>
+#include <QCoreApplication>
+#include <QDebug>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 namespace WinMMM10 {
 
@@ -17,16 +20,52 @@ ApplicationCache& ApplicationCache::instance() {
 }
 
 void ApplicationCache::initializeDirectories() {
-    QString cacheBase = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir cacheDir(cacheBase);
-    if (!cacheDir.exists()) {
-        cacheDir.mkpath(".");
+    // Early return if already initialized
+    if (!m_cacheDir.empty()) {
+        return;
     }
     
+    QString cacheBase;
+    
+    try {
+        // Try to get Qt's standard cache location
+        cacheBase = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+        
+        // Validate path: check if empty, too long, or invalid
+        if (cacheBase.isEmpty() || cacheBase.length() > 260) {
+            throw std::runtime_error("Invalid Qt cache path");
+        }
+        
+        // Verify we can create the directory
+        QDir cacheDir(cacheBase);
+        if (!cacheDir.exists() && !cacheDir.mkpath(".")) {
+            throw std::runtime_error("Cannot create cache directory");
+        }
+    }
+    catch (...) {
+        // Fallback to executable directory + "/cache"
+        QString exePath = QCoreApplication::applicationFilePath();
+        QFileInfo exeInfo(exePath);
+        QString exeDir = exeInfo.absolutePath();
+        cacheBase = exeDir + "/cache";
+        
+        QDir fallbackDir(cacheBase);
+        if (!fallbackDir.exists()) {
+            if (!fallbackDir.mkpath(".")) {
+                // Last resort: use temp directory
+                cacheBase = QDir::tempPath() + "/WinMMM10Editor/cache";
+                QDir tempDir(cacheBase);
+                tempDir.mkpath(".");
+            }
+        }
+    }
+    
+    // Set directories
     m_cacheDir = cacheBase.toStdString();
     m_tempDir = (cacheBase + "/temp").toStdString();
     m_thumbnailDir = (cacheBase + "/thumbnails").toStdString();
     
+    // Create subdirectories
     QDir tempDir(QString::fromStdString(m_tempDir));
     if (!tempDir.exists()) {
         tempDir.mkpath(".");
@@ -112,21 +151,25 @@ void ApplicationCache::clearRecentFiles() {
 
 std::string ApplicationCache::getCacheDirectory() const {
     if (m_cacheDir.empty()) {
-        const_cast<ApplicationCache*>(this)->initializeDirectories();
+        // Use mutable version to initialize
+        ApplicationCache* mutableThis = const_cast<ApplicationCache*>(this);
+        mutableThis->initializeDirectories();
     }
     return m_cacheDir;
 }
 
 std::string ApplicationCache::getTempDirectory() const {
     if (m_tempDir.empty()) {
-        const_cast<ApplicationCache*>(this)->initializeDirectories();
+        ApplicationCache* mutableThis = const_cast<ApplicationCache*>(this);
+        mutableThis->initializeDirectories();
     }
     return m_tempDir;
 }
 
 std::string ApplicationCache::getThumbnailDirectory() const {
     if (m_thumbnailDir.empty()) {
-        const_cast<ApplicationCache*>(this)->initializeDirectories();
+        ApplicationCache* mutableThis = const_cast<ApplicationCache*>(this);
+        mutableThis->initializeDirectories();
     }
     return m_thumbnailDir;
 }
@@ -220,35 +263,55 @@ void ApplicationCache::clearThumbnails() {
 }
 
 void ApplicationCache::load() {
-    initializeDirectories();
-    
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "WinMMM10", "Editor");
-    
-    // Load recent projects
-    int projectCount = settings.beginReadArray("recentProjects");
-    m_recentProjects.clear();
-    for (int i = 0; i < projectCount; ++i) {
-        settings.setArrayIndex(i);
-        RecentFile rf;
-        rf.filepath = settings.value("filepath").toString().toStdString();
-        rf.displayName = settings.value("displayName").toString().toStdString();
-        rf.lastAccessed = settings.value("lastAccessed").toLongLong();
-        m_recentProjects.push_back(rf);
+    try {
+        initializeDirectories();
     }
-    settings.endArray();
-    
-    // Load recent binaries
-    int binaryCount = settings.beginReadArray("recentBinaries");
-    m_recentBinaries.clear();
-    for (int i = 0; i < binaryCount; ++i) {
-        settings.setArrayIndex(i);
-        RecentFile rf;
-        rf.filepath = settings.value("filepath").toString().toStdString();
-        rf.displayName = settings.value("displayName").toString().toStdString();
-        rf.lastAccessed = settings.value("lastAccessed").toLongLong();
-        m_recentBinaries.push_back(rf);
+    catch (const std::exception& e) {
+        // Log error but continue - cache is optional
+        qWarning() << "Failed to initialize cache directories:" << e.what();
+        // Use fallback paths
+        if (m_cacheDir.empty()) {
+            QString exePath = QCoreApplication::applicationFilePath();
+            QFileInfo exeInfo(exePath);
+            m_cacheDir = (exeInfo.absolutePath() + "/cache").toStdString();
+            m_tempDir = (exeInfo.absolutePath() + "/cache/temp").toStdString();
+            m_thumbnailDir = (exeInfo.absolutePath() + "/cache/thumbnails").toStdString();
+        }
     }
-    settings.endArray();
+    
+    try {
+        QSettings settings(QSettings::IniFormat, QSettings::UserScope, "WinMMM10", "Editor");
+        
+        // Load recent projects
+        int projectCount = settings.beginReadArray("recentProjects");
+        m_recentProjects.clear();
+        for (int i = 0; i < projectCount; ++i) {
+            settings.setArrayIndex(i);
+            RecentFile rf;
+            rf.filepath = settings.value("filepath").toString().toStdString();
+            rf.displayName = settings.value("displayName").toString().toStdString();
+            rf.lastAccessed = settings.value("lastAccessed").toLongLong();
+            m_recentProjects.push_back(rf);
+        }
+        settings.endArray();
+        
+        // Load recent binaries
+        int binaryCount = settings.beginReadArray("recentBinaries");
+        m_recentBinaries.clear();
+        for (int i = 0; i < binaryCount; ++i) {
+            settings.setArrayIndex(i);
+            RecentFile rf;
+            rf.filepath = settings.value("filepath").toString().toStdString();
+            rf.displayName = settings.value("displayName").toString().toStdString();
+            rf.lastAccessed = settings.value("lastAccessed").toLongLong();
+            m_recentBinaries.push_back(rf);
+        }
+        settings.endArray();
+    }
+    catch (const std::exception& e) {
+        qWarning() << "Failed to load cache settings:" << e.what();
+        // Continue with empty cache
+    }
 }
 
 void ApplicationCache::save() {
