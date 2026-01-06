@@ -383,6 +383,11 @@ target_link_libraries(${PROJECT_NAME}
 # Windows-specific: Link OpenGL library for legacy OpenGL functions
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} opengl32)
+    
+    # Increase stack size to 4MB to prevent stack overflow during initialization
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LINK_FLAGS "/STACK:4194304"
+    )
 endif()
 
 # Windows-specific: Auto-deploy Qt DLLs after build

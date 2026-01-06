@@ -19,20 +19,23 @@ namespace WinMMM10 {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
-    qDebug() << "MainWindow: Loading settings...";
-    Settings::instance().load();
-    qDebug() << "MainWindow: Settings loaded";
+    qDebug() << "MainWindow: Constructor started";
+    qDebug() << "MainWindow: Member variables initialized";
     
-    // Defer cache loading until after UI is set up and Qt is fully initialized
+    // Defer both Settings and Cache loading until after UI is set up and Qt is fully initialized
     // This prevents stack overflow from QStandardPaths during early initialization
-    qDebug() << "MainWindow: Cache loading deferred until after UI setup";
+    qDebug() << "MainWindow: Settings and cache loading deferred until after UI setup";
     
     qDebug() << "MainWindow: Initializing editing engines...";
     // Initialize editing engines
     m_hexSearch = new HexSearch(&m_binaryFile);
+    qDebug() << "MainWindow: HexSearch created";
     m_batchOps = new BatchOperations(&m_binaryFile);
+    qDebug() << "MainWindow: BatchOperations created";
     m_mapMath = new MapMath(&m_binaryFile);
+    qDebug() << "MainWindow: MapMath created";
     m_interpolationEngine = new InterpolationEngine(&m_binaryFile);
+    qDebug() << "MainWindow: InterpolationEngine created";
     qDebug() << "MainWindow: Editing engines initialized";
     
     qDebug() << "MainWindow: Setting up UI...";
@@ -54,9 +57,19 @@ MainWindow::MainWindow(QWidget* parent)
     updateWindowTitle();
     setMinimumSize(1024, 768);
     resize(1280, 800);
+    qDebug() << "MainWindow: Window properties set";
     
-    // Load cache after UI is fully set up using QTimer to defer until event loop starts
+    // Load Settings and Cache after UI is fully set up using QTimer to defer until event loop starts
     QTimer::singleShot(0, this, [this]() {
+        qDebug() << "MainWindow: Loading settings (deferred)...";
+        try {
+            Settings::instance().load();
+            qDebug() << "MainWindow: Settings loaded successfully";
+        }
+        catch (const std::exception& e) {
+            qWarning() << "MainWindow: Failed to load settings:" << e.what();
+        }
+        
         qDebug() << "MainWindow: Loading cache (deferred)...";
         try {
             CacheManager::instance().applicationCache().load();
