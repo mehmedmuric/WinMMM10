@@ -65,17 +65,7 @@ MainWindow::MainWindow(QWidget* parent)
         qDebug() << "MainWindow: Loading settings (deferred)...";
         try {
             Settings::instance().load();
-            // Initialize Safe Mode from settings
-            SafeModeManager::instance().setEnabled(Settings::instance().safeModeEnabled());
             qDebug() << "MainWindow: Settings loaded successfully";
-            
-            // Update Safe Mode status in UI
-            updateSafeModeStatus();
-            
-            // Set hex editor read-only state based on Safe Mode
-            if (m_hexEditor && m_hexEditor->hexEditor()) {
-                m_hexEditor->hexEditor()->setReadOnly(Settings::instance().safeModeEnabled());
-            }
         }
         catch (const std::exception& e) {
             qWarning() << "MainWindow: Failed to load settings:" << e.what();
@@ -90,8 +80,31 @@ MainWindow::MainWindow(QWidget* parent)
             qWarning() << "MainWindow: Failed to load cache:" << e.what();
         }
         
-        // Update status bar with Safe Mode indicator
-        updateSafeModeStatus();
+        // Initialize Safe Mode from settings AFTER both are loaded
+        try {
+            bool safeModeEnabled = Settings::instance().safeModeEnabled();
+            SafeModeManager::instance().setEnabled(safeModeEnabled);
+            
+            // Update Safe Mode status in UI
+            updateSafeModeStatus();
+            
+            // Set hex editor read-only state based on Safe Mode
+            if (m_hexEditor && m_hexEditor->hexEditor()) {
+                m_hexEditor->hexEditor()->setReadOnly(safeModeEnabled);
+            }
+            
+            // Update menu action state
+            QList<QAction*> actions = menuBar()->findChildren<QAction*>();
+            for (QAction* action : actions) {
+                if (action->text() == "Safe Mode (WinOLS Style)") {
+                    action->setChecked(safeModeEnabled);
+                    break;
+                }
+            }
+        }
+        catch (const std::exception& e) {
+            qWarning() << "MainWindow: Failed to initialize Safe Mode:" << e.what();
+        }
     });
 
     qDebug() << "MainWindow: Constructor complete";
@@ -191,7 +204,7 @@ void MainWindow::setupMenus() {
     toolsMenu->addSeparator();
     QAction* safeModeAction = new QAction("Safe Mode (WinOLS Style)", this);
     safeModeAction->setCheckable(true);
-    safeModeAction->setChecked(Settings::instance().safeModeEnabled());
+    safeModeAction->setChecked(true); // Default: enabled (will be updated after settings load)
     connect(safeModeAction, &QAction::triggered, this, &MainWindow::toggleSafeMode);
     toolsMenu->addAction(safeModeAction);
     
